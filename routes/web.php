@@ -12,8 +12,18 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PosController;
+use App\Models\Product;
 
 Route::get('/', [FrontController::class, 'index'])->name('home');
+Route::get('/', function () {
+    $products = Product::latest()->take(4)->get(); 
+    return view('welcome', compact('products'));
+});
+Route::get('/katalog', function () {
+    // Mengambil semua produk, tapi dibagi per halaman (misal: 12 produk per halaman)
+    $products = Product::latest()->paginate(12); 
+    return view('katalog', compact('products'));
+})->name('katalog');
 Route::get('/produk/{id}', [App\Http\Controllers\FrontController::class, 'show'])->name('produk.detail');
 Route::get('/dashboard', function () {
     return view('dashboard');

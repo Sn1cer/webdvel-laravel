@@ -63,7 +63,7 @@
 
         <div class="nav-links" id="navLinks">
             <a href="/" class="nav-link">Beranda</a>
-            <a href="/#katalog" class="nav-link">Katalog Produk</a>
+            <a href="{{ route('katalog') }}" class="nav-link">Katalog Produk</a>
 
             @guest
                 <a href="{{ route('login') }}" class="btn-login">Masuk</a>
@@ -82,7 +82,7 @@
                     @endif
                 </a>
 
-                <a href="{{ route('orders.history') }}" class="nav-link" style="color: var(--accent);">📦 Pesanan Saya</a>
+                <a href="{{ route('orders.history') }}" class="nav-link">📦 Pesanan Saya</a>
 
                 @if(Auth::user()->email === 'admin@dveljeans.com')
                     <a href="{{ route('admin.dashboard') }}" class="btn-login" style="background: var(--accent); border-color: var(--accent); color: white !important;">Panel Admin</a>

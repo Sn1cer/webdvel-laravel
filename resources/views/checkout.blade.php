@@ -1,98 +1,101 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - D'Vel Jeans</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <style>
-        /* --- CSS DASAR --- */
-        :root { --accent: #d97706; --text: #1e293b; --bg: #f8fafc; --border: #e2e8f0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
-        .navbar { background: white; padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); text-decoration: none; }
-        
-        /* --- LAYOUT UTAMA --- */
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: flex; gap: 40px; align-items: flex-start;}
-        .checkout-form { flex: 1; background: white; padding: 35px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
-        .section-title { font-size: 22px; font-weight: 800; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border);}
-        
-        /* --- FORM ALAMAT PENGIRIMAN --- */
-        .form-row { display: flex; gap: 15px; }
-        .form-row .form-group { flex: 1; }
-        .form-group { margin-bottom: 20px; position: relative; }
-        .form-label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-        .form-control { width: 100%; padding: 14px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; outline: none; transition: 0.2s; box-sizing: border-box; background: #f8fafc;}
-        .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217,119,6,0.1); background: white;}
-        textarea.form-control { resize: vertical; min-height: 100px; }
+@extends('layouts.app')
 
-        /* --- FITUR AUTOCOMPLETE WILAYAH --- */
-        .autocomplete-items { position: absolute; border: 1px solid var(--border); border-radius: 8px; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; display: none; }
-        .autocomplete-items div { padding: 12px 15px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
-        .autocomplete-items div:hover { background-color: var(--accent); color: white; }
-        .autocomplete-active { display: block; }
+@section('title', "Checkout - D'Vel Jeans")
 
-        /* --- DESAIN STRUK (RECEIPT) UNTUK RINGKASAN PESANAN --- */
-        .checkout-summary {
-            width: 380px; 
-            background: white;
-            padding: 40px 30px; 
-            border-radius: 4px; 
-            border: 1px solid var(--border);
-            border-bottom: none; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03); 
-            position: sticky;
-            top: 100px;
+@push('styles')
+<style>
+    /* --- CSS KHUSUS HALAMAN CHECKOUT --- */
+    
+    /* Layout Utama */
+    .container-checkout { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: flex; gap: 40px; align-items: flex-start;}
+    .checkout-form { flex: 1; background: white; padding: 35px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+    .section-title { font-size: 22px; font-weight: 800; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border);}
+    
+    /* Form Alamat Pengiriman */
+    .form-row { display: flex; gap: 15px; }
+    .form-row .form-group { flex: 1; }
+    .form-group { margin-bottom: 20px; position: relative; }
+    .form-label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .form-control { width: 100%; padding: 14px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; outline: none; transition: 0.2s; box-sizing: border-box; background: #f8fafc;}
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217,119,6,0.1); background: white;}
+    textarea.form-control { resize: vertical; min-height: 100px; }
+
+    /* Fitur Autocomplete Wilayah */
+    .autocomplete-items { position: absolute; border: 1px solid var(--border); border-radius: 8px; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; display: none; }
+    .autocomplete-items div { padding: 12px 15px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
+    .autocomplete-items div:hover { background-color: var(--accent); color: white; }
+    .autocomplete-active { display: block; }
+
+    /* Desain Struk (Receipt) */
+    .checkout-summary {
+        width: 380px; 
+        background: white;
+        padding: 40px 30px; 
+        border-radius: 4px; 
+        border: 1px solid var(--border);
+        border-bottom: none; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.03); 
+        position: sticky;
+        top: 100px;
+        box-sizing: border-box;
+    }
+    .checkout-summary::after {
+        content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 15px; 
+        background: white; background-size: 30px 30px; background-position: bottom;
+        background-image: linear-gradient(135deg, transparent 40%, #e2e8f0 40%, #e2e8f0 50%, transparent 50%),
+                          linear-gradient(225deg, transparent 40%, #e2e8f0 40%, #e2e8f0 50%, transparent 50%);
+        border-bottom: 1px solid var(--border); 
+    }
+
+    .receipt-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
+    .receipt-header .receipt-logo { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); letter-spacing: 1px; margin-bottom: 5px; }
+    .receipt-header .receipt-date { font-size: 12px; color: #64748b; }
+    .struk-title { font-size: 18px; font-weight: 800; margin-bottom: 15px; padding-bottom: 10px; border-bottom: none; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+
+    .summary-item.struk-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #f1f5f9; align-items: center;}
+    .struk-item .item-name { font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 4px; line-height: 1.3;}
+    .struk-item .item-detail { color: #64748b; font-size: 12px; }
+    .struk-item .item-price { font-weight: 800; font-size: 14px; white-space: nowrap;}
+
+    .summary-total.struk-total { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 2px dashed var(--border); font-size: 18px; font-weight: 800; color: var(--text);}
+    .struk-total span:first-child { text-transform: uppercase; letter-spacing: 1px; }
+    
+    .btn-pay { display: block; width: 100%; text-align: center; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; margin-top: 25px; padding: 14px; font-size: 14px; box-sizing: border-box;}
+    .btn-pay:hover { filter: brightness(1.1); transform: translateY(-2px);}
+
+    /* --- RESPONSIVE MOBILE --- */
+    @media (max-width: 768px) {
+        .container-checkout { 
+            flex-direction: column-reverse; 
+            gap: 20px; 
+            margin: 20px auto; 
         }
-
-        /* Efek Gerigi Kertas Struk di Bawah */
-        .checkout-summary::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        .checkout-summary { 
+            width: 100%; 
+            position: static; 
+            padding: 30px 20px;
+        }
+        .checkout-form {
             width: 100%;
-            height: 15px; 
-            background: white;
-            background-size: 30px 30px; 
-            background-position: bottom;
-            background-image: linear-gradient(135deg, transparent 40%, #e2e8f0 40%, #e2e8f0 50%, transparent 50%),
-                              linear-gradient(225deg, transparent 40%, #e2e8f0 40%, #e2e8f0 50%, transparent 50%);
-            border-bottom: 1px solid var(--border); 
+            padding: 20px;
+            box-sizing: border-box;
         }
+        .form-row {
+            flex-direction: column; 
+            gap: 0;
+        }
+    }
+</style>
+@endpush
 
-        /* Header Struk (Logo & Tanggal) */
-        .receipt-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
-        .receipt-header .receipt-logo { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); letter-spacing: 1px; margin-bottom: 5px; }
-        .receipt-header .receipt-date { font-size: 12px; color: #64748b; }
+@section('content')
+    <div style="max-width: 1200px; margin: 20px auto 0; padding: 0 20px;">
+        <a href="{{ route('cart.index') }}" style="text-decoration: none; font-size: 15px; font-weight: 700; color: var(--text); display: inline-flex; align-items: center; gap: 5px;">
+            &larr; Kembali ke Keranjang
+        </a>
+    </div>
 
-        .struk-title { font-size: 18px; font-weight: 800; margin-bottom: 15px; padding-bottom: 10px; border-bottom: none; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
-
-        /* Item Barang di Struk */
-        .summary-item.struk-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #f1f5f9; align-items: center;}
-        .struk-item .item-name { font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 4px;}
-        .struk-item .item-detail { color: #64748b; font-size: 12px; }
-        .struk-item .item-price { font-weight: 800; font-size: 14px; }
-
-        /* Total Tagihan */
-        .summary-total.struk-total { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 2px dashed var(--border); font-size: 18px; font-weight: 800; color: var(--text);}
-        .struk-total span:first-child { text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Tombol Buat Pesanan */
-        .btn-pay { display: block; width: 100%; text-align: center; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; margin-top: 25px; padding: 14px; font-size: 14px;}
-        .btn-pay:hover { filter: brightness(1.1); transform: translateY(-2px);}
-    </style>
-</head>
-<body>
-
-    <nav class="navbar">
-        <a href="/" class="logo">D'Vel Jeans</a>
-        <div class="nav-links">
-            <a href="{{ route('cart.index') }}" style="text-decoration: none; font-size: 16px; font-weight: 700; color: var(--text);">← Kembali ke Keranjang</a>
-        </div>
-    </nav>
-
-    <div class="container">
+    <div class="container-checkout">
         
         <div class="checkout-form">
             <h2 class="section-title">📍 Alamat Pengiriman</h2>
@@ -153,75 +156,72 @@
             @endforeach
             
             <div class="summary-total struk-total">
-                <span>Total</span>
+                <span>Total Tagihan</span>
                 <span style="color: var(--accent);">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
             </div>
 
             <button type="submit" form="form-pesanan" class="btn-pay">Buat Pesanan Sekarang</button>
         </div>
     </div>
+@endsection
 
-    <script>
-        // Data Wilayah 
-        const dataWilayah = [
-            "Jawa Barat, Kota Cimahi, Cimahi Tengah, 40525",
-            "Jawa Barat, Kota Cimahi, Cimahi Utara, 40511",
-            "Jawa Barat, Kota Cimahi, Cimahi Selatan, 40531",
-            "Jawa Barat, Kota Bandung, Cicendo, 40171",
-            "Jawa Barat, Kota Bandung, Coblong, 40132",
-            "Jawa Barat, Kabupaten Bandung Barat, Padalarang, 40553",
-            "DKI Jakarta, Jakarta Selatan, Kebayoran Baru, 12110",
-            "Banten, Kota Tangerang, Cipondoh, 15148"
-        ];
+@push('scripts')
+<script>
+    // Fitur Autocomplete Wilayah
+    const dataWilayah = [
+        "Jawa Barat, Kota Cimahi, Cimahi Tengah, 40525",
+        "Jawa Barat, Kota Cimahi, Cimahi Utara, 40511",
+        "Jawa Barat, Kota Cimahi, Cimahi Selatan, 40531",
+        "Jawa Barat, Kota Bandung, Cicendo, 40171",
+        "Jawa Barat, Kota Bandung, Coblong, 40132",
+        "Jawa Barat, Kabupaten Bandung Barat, Padalarang, 40553",
+        "DKI Jakarta, Jakarta Selatan, Kebayoran Baru, 12110",
+        "Banten, Kota Tangerang, Cipondoh, 15148"
+    ];
 
-        const inputLokasi = document.getElementById("input_lokasi");
-        const lokasiList = document.getElementById("lokasi-list");
+    const inputLokasi = document.getElementById("input_lokasi");
+    const lokasiList = document.getElementById("lokasi-list");
 
-        inputLokasi.addEventListener("input", function() {
-            let nilaiInput = this.value;
-            lokasiList.innerHTML = ""; 
+    inputLokasi.addEventListener("input", function() {
+        let nilaiInput = this.value;
+        lokasiList.innerHTML = ""; 
+        
+        if (nilaiInput.length >= 3) {
+            let cocok = false;
             
-            // Minimal ketik 3 huruf baru cari
-            if (nilaiInput.length >= 3) {
-                let cocok = false;
-                
-                dataWilayah.forEach(function(lokasi) {
-                    if (lokasi.toLowerCase().includes(nilaiInput.toLowerCase())) {
-                        cocok = true;
-                        let div = document.createElement("div");
-                        
-                        // Menyorot teks yang cocok
-                        let regex = new RegExp(nilaiInput, "gi");
-                        div.innerHTML = lokasi.replace(regex, "<strong>$&</strong>");
-                        
-                        div.addEventListener("click", function() {
-                            inputLokasi.value = lokasi;
-                            lokasiList.classList.remove("autocomplete-active");
-                        });
-                        lokasiList.appendChild(div);
-                    }
-                });
-
-                if (cocok) {
-                    lokasiList.classList.add("autocomplete-active");
-                } else {
+            dataWilayah.forEach(function(lokasi) {
+                if (lokasi.toLowerCase().includes(nilaiInput.toLowerCase())) {
+                    cocok = true;
                     let div = document.createElement("div");
-                    div.innerHTML = "<em style='color:#64748b;'>Wilayah tidak ditemukan...</em>";
+                    
+                    let regex = new RegExp(nilaiInput, "gi");
+                    div.innerHTML = lokasi.replace(regex, "<strong>$&</strong>");
+                    
+                    div.addEventListener("click", function() {
+                        inputLokasi.value = lokasi;
+                        lokasiList.classList.remove("autocomplete-active");
+                    });
                     lokasiList.appendChild(div);
-                    lokasiList.classList.add("autocomplete-active");
                 }
+            });
+
+            if (cocok) {
+                lokasiList.classList.add("autocomplete-active");
             } else {
-                lokasiList.classList.remove("autocomplete-active");
+                let div = document.createElement("div");
+                div.innerHTML = "<em style='color:#64748b;'>Wilayah tidak ditemukan...</em>";
+                lokasiList.appendChild(div);
+                lokasiList.classList.add("autocomplete-active");
             }
-        });
+        } else {
+            lokasiList.classList.remove("autocomplete-active");
+        }
+    });
 
-        // Menutup dropdown jika user klik di luar form
-        document.addEventListener("click", function (e) {
-            if (e.target !== inputLokasi) {
-                lokasiList.classList.remove("autocomplete-active");
-            }
-        });
-    </script>
-
-</body>
-</html>
+    document.addEventListener("click", function (e) {
+        if (e.target !== inputLokasi) {
+            lokasiList.classList.remove("autocomplete-active");
+        }
+    });
+</script>
+@endpush
