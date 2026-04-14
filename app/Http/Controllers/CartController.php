@@ -11,35 +11,33 @@ class CartController extends Controller
     public function index()
     {
         // Ambil semua data keranjang milik user yang sedang login
-        // 'with('product')' digunakan untuk memanggil relasi data celananya sekaligus
         $carts = Cart::with('product')->where('user_id', Auth::id())->get();
         
-        // Hitung Total Harga Belanja
+        //total harga
         $totalHarga = 0;
         foreach ($carts as $cart) {
             $totalHarga += $cart->product->harga * $cart->jumlah;
         }
 
-        // Tampilkan halaman keranjang sambil membawa data tersebut
+        // tampilan halaman keranjang dan data keranjang
         return view('cart', compact('carts', 'totalHarga'));
     }
     public function store(Request $request)
     {
-        // Validasi: Pastikan data yang dikirim dari form lengkap dan benar
+        // Validasi
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'ukuran' => 'required',
             'jumlah' => 'required|integer|min:1'
         ]);
 
-        // Cek apakah celana dengan ukuran tersebut sudah ada di keranjang pelanggan ini
+        // valadasi ukuran sesuai atau tidak
         $cart = Cart::where('user_id', Auth::id())
                     ->where('product_id', $request->product_id)
                     ->where('ukuran', $request->ukuran)
                     ->first();
-
+        // pengecekan ukuran
         if ($cart) {
-            // Jika SUDAH ADA, cukup tambahkan jumlah kuantitasnya
             $cart->jumlah += $request->jumlah;
             $cart->save();
         } else {
@@ -52,13 +50,12 @@ class CartController extends Controller
             ]);
         }
 
-        // 3. Kembalikan pelanggan ke halaman sebelumnya dengan pesan sukses!
         return redirect()->back()->with('success', 'Yey! Produk berhasil ditambahkan ke keranjang Anda 🛒');
     }
-    // Fungsi untuk mengubah jumlah atau ukuran
+    
     public function update(Request $request, Cart $cart)
     {
-        // Pastikan keranjang ini benar-benar milik orang yang sedang login
+        // untuk orang yang sudah login
         if ($cart->user_id !== Auth::id()) {
             return abort(403);
         }

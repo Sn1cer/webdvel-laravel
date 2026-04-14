@@ -9,10 +9,18 @@
     /* Layout Detail Produk */
     .container-detail { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
     
-    /* Bagian Kiri: Gambar */
-    .product-image-box { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border); }
-    .product-image { width: 100%; height: 500px; object-fit: cover; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 80px;}
+    /* Bagian Kiri: Gambar Utama & Galeri */
+    .product-image-box { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px;}
+    .product-image { width: 100%; height: 500px; object-fit: cover; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 80px; transition: opacity 0.3s ease-in-out;}
     
+    /* CSS Tambahan untuk Galeri Multiple Image */
+    .thumbnail-gallery { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: thin; }
+    .thumbnail-gallery::-webkit-scrollbar { height: 6px; }
+    .thumbnail-gallery::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .thumb-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; opacity: 0.6; background: #f1f5f9; flex-shrink: 0;}
+    .thumb-img:hover { opacity: 1; }
+    .thumb-img.active-thumb { border-color: var(--accent); opacity: 1; }
+
     /* Bagian Kanan: Info & Form */
     .product-info { padding: 10px 0; }
     .breadcrumb { font-size: 14px; color: #64748b; margin-bottom: 15px; }
@@ -40,13 +48,14 @@
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 768px) {
         .container-detail { 
-            grid-template-columns: 1fr; /* Berubah jadi 1 kolom (atas-bawah) */
+            grid-template-columns: 1fr; 
             gap: 30px; 
             margin: 20px auto; 
         }
-        .product-image { height: 350px; } /* Gambar lebih pendek di HP */
+        .product-image { height: 350px; } 
+        .thumb-img { width: 65px; height: 65px; } /* Thumbnail lebih kecil di HP */
         .product-title { font-size: 28px; }
-        .action-area { flex-direction: column; } /* Input jumlah dan tombol Add to cart jadi atas-bawah */
+        .action-area { flex-direction: column; } 
         .qty-input { width: 100%; } 
     }
 </style>
@@ -56,8 +65,28 @@
     <div class="container-detail">
         
         <div class="product-image-box">
-            @if($product->gambar)
-                <img src="{{ asset('images/'.$product->gambar) }}" alt="{{ $product->nama_produk }}" class="product-image">
+            @php
+                // Kumpulkan semua gambar yang terisi di database ke dalam satu Array dan hapus yang kosong
+                $allImages = array_filter([
+                    $product->gambar, $product->gambar_2, $product->gambar_3, 
+                    $product->gambar_4, $product->gambar_5, $product->gambar_6, 
+                    $product->gambar_7, $product->gambar_8
+                ]);
+            @endphp
+
+            @if(count($allImages) > 0)
+                <img src="{{ asset('images/'. reset($allImages)) }}" alt="{{ $product->nama_produk }}" class="product-image" id="mainImage">
+                
+                @if(count($allImages) > 1)
+                <div class="thumbnail-gallery">
+                    @foreach($allImages as $index => $img)
+                        <img src="{{ asset('images/'.$img) }}" 
+                             class="thumb-img {{ $index == 0 ? 'active-thumb' : '' }}" 
+                             onclick="changeMainImage(this, '{{ asset('images/'.$img) }}')" 
+                             alt="Thumbnail {{ $index + 1 }}">
+                    @endforeach
+                </div>
+                @endif
             @else
                 <div class="product-image">👖</div>
             @endif
@@ -85,8 +114,6 @@
                 </div>
 
                 @php
-                    // Memecah teks ukuran dari database menjadi Array
-                    // Jika data kosong, default menampilkan 27-34
                     $ukuranTersedia = $product->ukuran ? explode(',', $product->ukuran) : ['27', '28', '30', '32', '34'];
                 @endphp
 
@@ -141,3 +168,25 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Fungsi untuk mengganti gambar utama di Detail Produk
+    function changeMainImage(element, newSrc) {
+        // 1. Ubah gambar utama dengan efek transisi opacity
+        const mainImg = document.getElementById('mainImage');
+        mainImg.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            mainImg.src = newSrc;
+            mainImg.style.opacity = '1';
+        }, 150);
+
+        // 2. Pindahkan border penanda aktif (active-thumb) ke gambar yang baru diklik
+        document.querySelectorAll('.thumb-img').forEach(img => {
+            img.classList.remove('active-thumb');
+        });
+        element.classList.add('active-thumb');
+    }
+</script>
+@endpush

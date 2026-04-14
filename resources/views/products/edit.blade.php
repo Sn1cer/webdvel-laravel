@@ -50,6 +50,15 @@
             transition: 0.2s;
             box-sizing: border-box; /* Mencegah input melebar keluar wadah */
         }
+        .image-upload-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; margin-bottom: 20px;}
+        .upload-box { border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; text-align: center; background: #f8fafc;}
+        .upload-box label { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: block; color: #1e293b; }
+        .upload-box input { font-size: 12px; width: 100%; }
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
         .form-input:focus, .form-textarea:focus {
             outline: none;
             border-color: var(--accent);
@@ -134,8 +143,40 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Ganti Foto (Kosongkan jika foto lama tetap dipakai)</label>
-                    <input type="file" name="gambar" class="form-input" style="padding: 9px 12px; background: var(--surface2);">
+                    <label style="font-weight: 800; font-size: 16px; margin-top: 20px; display: block;">Galeri Foto Produk</label>
+                    <div class="image-upload-grid">
+                        <div class="upload-box" style="border-color: #d97706; background: #fffbeb;">
+                            <label>Gambar Utama (Sampul) *</label>
+                            <input type="file" name="gambar" accept="image/*" required> </div>
+                        <div class="upload-box">
+                            <label>Gambar 2 (Opsional)</label>
+                            <input type="file" name="gambar_2" accept="image/*">
+                        </div>
+                        <div class="upload-box">
+                            <label>Gambar 3 (Opsional)</label>
+                            <input type="file" name="gambar_3" accept="image/*">
+                        </div>
+                        <div class="upload-box">
+                            <label>Gambar 4 (Opsional)</label>
+                            <input type="file" name="gambar_4" accept="image/*">
+                        </div>
+                        <div class="upload-box">
+                            <label>Gambar 5 (Opsional)</label>
+                            <input type="file" name="gambar_5" accept="image/*">
+                        </div>
+                        <div class="upload-box">
+                            <label>Gambar 6 (Opsional)</label>
+                            <input type="file" name="gambar_6" accept="image/*">
+                        </div>
+                        <div class="upload-box">
+                            <label>Gambar 7 (Opsional)</label>
+                            <input type="file" name="gambar_7" accept="image/*">
+                        </div>
+                        <div class="upload-box">
+                            <label>Gambar 8 (Opsional)</label>
+                            <input type="file" name="gambar_8" accept="image/*">
+                        </div>
+                    </div>
                 </div>
             </div>
 

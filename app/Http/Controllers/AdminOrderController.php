@@ -10,15 +10,15 @@ class AdminOrderController extends Controller
     // Fungsi untuk menampilkan daftar semua pesanan ke Admin
     public function index(Request $request)
     {
-        // Mulai pencarian data pesanan
+        // pencarian data 
         $query = Order::query();
 
-        // LOGIKA FILTER: Jika ada permintaan tab status dari URL (misal: ?status=Diproses)
+        // LOGIKA FILTER (misal: ?status=Diproses)
         if ($request->filled('status') && $request->status != 'Semua') {
             $query->where('status', $request->status);
         }
 
-        // Ambil data yang sudah difilter, urutkan dari yang terbaru
+        // selesai
         $orders = $query->latest()->get();
 
         return view('admin.orders.index', compact('orders'));
@@ -29,10 +29,9 @@ class AdminOrderController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        // Simpan status dan resi sekaligus
         $order->update([
             'status' => $request->status,
-            'resi' => $request->resi // Ini baris barunya!
+            'resi' => $request->resi 
         ]);
 
         return redirect()->back()->with('success', 'Status & Resi pesanan berhasil diperbarui!');
