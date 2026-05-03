@@ -49,7 +49,7 @@ class PosController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item['id'],
                     'jumlah' => $item['qty'],
-                    'harga_satuan' => $item['price'], // INI DIA KUNCI RAHASIANYA!
+                    'harga_satuan' => $item['price'], 
                     'ukuran' => '-'
                 ]);
 

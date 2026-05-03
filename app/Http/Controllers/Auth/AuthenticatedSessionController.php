@@ -28,14 +28,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // --- OTAK PENYELEKSI (LOGIKA WHITELIST) ---
-        
-        // whitelist email admin
-        if ($request->user()->email === 'admin@dveljeans.com') {
+        // --- OTAK PENYELEKSI (LOGIKA BERDASARKAN ROLE) ---
+        if ($request->user()->isAdmin() || $request->user()->isOwner()) {
             // Jika ya, lempar ke halaman Panel Admin
             return redirect()->route('admin.dashboard');
         }
 
+        // Jika Pelanggan biasa, lempar ke halaman utama
         return redirect('/');
     }
 
