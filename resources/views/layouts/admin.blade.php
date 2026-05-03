@@ -85,6 +85,12 @@
         
         <div class="menu-label" style="margin-top: 20px;">Sistem</div>
         
+        @if(auth()->check() && auth()->user()->isOwner())
+        <a href="{{ route('admin.user-management.index') }}" class="nav-item {{ request()->routeIs('admin.user-management.*') ? 'nav-active' : '' }}">
+            👑 Kelola Akun Admin
+        </a>
+        @endif
+
         <a href="/" target="_blank" class="nav-item">
             🌐 Lihat Website Depan
         </a>

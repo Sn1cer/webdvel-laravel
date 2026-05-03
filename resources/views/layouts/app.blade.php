@@ -84,11 +84,13 @@
 
                 <a href="{{ route('orders.history') }}" class="nav-link">📦 Pesanan Saya</a>
 
-                @if(Auth::user()->email === 'admin@dveljeans.com')
-                    <a href="{{ route('admin.dashboard') }}" class="btn-login" style="background: var(--accent); border-color: var(--accent); color: white !important;">Panel Admin</a>
+                {{-- MULAI: Pengecekan Role Dinamis untuk Admin dan Owner --}}
+                @if(auth()->user()->isAdmin() || auth()->user()->isOwner())
+                    <a href="{{ route('admin.dashboard') }}" class="btn-login" style="background: var(--accent); border-color: var(--accent); color: white !important;">⚡ Panel Admin</a>
                 @else
                     <span style="font-weight: 700; color: var(--text); white-space: nowrap;">Halo, {{ explode(' ', Auth::user()->name)[0] }}</span>
                 @endif
+                {{-- SELESAI: Pengecekan Role Dinamis --}}
                 
                 <form method="POST" action="{{ route('logout') }}" style="margin: 0; padding: 0;" class="form-logout">
                     @csrf
