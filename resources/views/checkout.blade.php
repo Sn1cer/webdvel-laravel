@@ -98,11 +98,26 @@
     <div class="container-checkout">
         
         <div class="checkout-form">
-            <h2 class="section-title">📍 Alamat Pengiriman</h2>
+            <h2 class="section-title">📍 Detail Pengiriman</h2>
             
             <form id="form-pesanan" action="{{ route('checkout.store') }}" method="POST">
                 @csrf
                 
+                <div class="form-group mb-4 p-4" style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;">
+                    <label class="form-label" style="font-size: 16px; margin-bottom: 12px;">Pilih Metode Pengiriman</label>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 15px;">
+                            <input type="radio" name="tipe_pesanan" id="tipe_online" value="Online" checked onchange="toggleAddressForm()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                            Kirim ke Alamat (Reguler)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 15px;">
+                            <input type="radio" name="tipe_pesanan" id="tipe_booking" value="Booking" onchange="toggleAddressForm()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                            Ambil di Toko (Booking) 
+                            <span style="font-size: 11px; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Gratis Ongkir</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Nama Depan</label>
@@ -115,25 +130,28 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Alamat Jalan</label>
-                    <input type="text" name="alamat_jalan" class="form-control" required placeholder="Contoh: Jl. Gatot Subroto No. 123">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Provinsi, Kota, Kecamatan, Kode Pos</label>
-                    <input type="text" id="input_lokasi" name="wilayah" class="form-control" required placeholder="Ketik min. 3 huruf (Contoh: cimahi)" autocomplete="off">
-                    <div id="lokasi-list" class="autocomplete-items"></div>
-                </div>
-
-                <div class="form-group">
                     <label class="form-label">No. WhatsApp / HP</label>
                     <input type="number" name="no_hp" class="form-control" required placeholder="Contoh: 081234567890">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Detail Alamat / Patokan (Opsional)</label>
-                    <textarea name="alamat_lengkap" class="form-control" placeholder="Contoh: Rumah warna biru pagar hitam, di depan Indomaret."></textarea>
+                <div id="address-form-container">
+                    <div class="form-group">
+                        <label class="form-label">Alamat Jalan</label>
+                        <input type="text" name="alamat_jalan" class="form-control" required placeholder="Contoh: Jl. Gatot Subroto No. 123">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Provinsi, Kota, Kecamatan, Kode Pos</label>
+                        <input type="text" id="input_lokasi" name="wilayah" class="form-control" required placeholder="Ketik min. 3 huruf (Contoh: cimahi)" autocomplete="off">
+                        <div id="lokasi-list" class="autocomplete-items"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Detail Alamat / Patokan (Opsional)</label>
+                        <textarea name="alamat_lengkap" class="form-control" placeholder="Contoh: Rumah warna biru pagar hitam, di depan Indomaret."></textarea>
+                    </div>
                 </div>
+
             </form>
         </div>
 
@@ -223,5 +241,36 @@
             lokasiList.classList.remove("autocomplete-active");
         }
     });
+
+    // --- FITUR BARU: TOGGLE FORM ALAMAT UNTUK BOOKING ---
+    function toggleAddressForm() {
+        const isBooking = document.getElementById('tipe_booking').checked;
+        const addressContainer = document.getElementById('address-form-container');
+        const addressInputs = addressContainer.querySelectorAll('input, select, textarea');
+
+        if (isBooking) {
+            // Sembunyikan form alamat
+            addressContainer.style.display = 'none';
+            // Nonaktifkan 'required' agar form bisa di-submit
+            addressInputs.forEach(input => {
+                if (input.required) {
+                    input.dataset.wasRequired = 'true'; // Simpan memori bahwa form ini awalnya wajib
+                    input.required = false;
+                }
+            });
+        } else {
+            // Tampilkan kembali form alamat
+            addressContainer.style.display = 'block';
+            // Kembalikan status 'required'
+            addressInputs.forEach(input => {
+                if (input.dataset.wasRequired === 'true') {
+                    input.required = true;
+                }
+            });
+        }
+    }
+
+    // Jalankan satu kali saat halaman dimuat untuk memastikan status awalnya benar
+    document.addEventListener('DOMContentLoaded', toggleAddressForm);
 </script>
 @endpush

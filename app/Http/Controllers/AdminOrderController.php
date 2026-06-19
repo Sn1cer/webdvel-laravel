@@ -10,8 +10,8 @@ class AdminOrderController extends Controller
     // Fungsi untuk menampilkan daftar semua pesanan ke Admin
     public function index(Request $request)
     {
-        // pencarian data 
-        $query = Order::query();
+        // Menambahkan with('details') untuk optimasi kecepatan pembacaan jumlah celana
+        $query = Order::with('details');
 
         // LOGIKA FILTER (misal: ?status=Diproses)
         if ($request->filled('status') && $request->status != 'Semua') {
@@ -34,6 +34,13 @@ class AdminOrderController extends Controller
             'resi' => $request->resi 
         ]);
 
-        return redirect()->back()->with('success', 'Status & Resi pesanan berhasil diperbarui!');
+        // Pesan notifikasi sukses yang dinamis (Cerdas mengenali tipe pesanan)
+        if ($order->tipe_pesanan == 'Booking' && $request->status == 'Dikirim') {
+            $pesanSukses = 'Status berhasil! Pesanan Booking telah Lunas dan selesai diambil.';
+        } else {
+            $pesanSukses = 'Status & Resi pesanan berhasil diperbarui!';
+        }
+
+        return redirect()->back()->with('success', $pesanSukses);
     }
 }

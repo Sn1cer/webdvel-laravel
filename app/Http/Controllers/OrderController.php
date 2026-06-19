@@ -31,6 +31,22 @@ class OrderController extends Controller
     // Memproses form pesanan dan mengurangi stok
     public function store(Request $request)
     {
+        // 1. Validasi dinamis berdasarkan tipe pesanan
+        $rules = [
+            'nama_depan' => 'required|string|max:255',
+            'nama_belakang' => 'required|string|max:255',
+            'no_hp' => 'required|string|max:20',
+            'tipe_pesanan' => 'required|in:Online,Booking',
+        ];
+
+        // Jika Online, alamat wajib diisi
+        if ($request->tipe_pesanan === 'Online') {
+            $rules['alamat_jalan'] = 'required|string|max:255';
+            $rules['wilayah'] = 'required|string|max:255';
+        }
+
+        $request->validate($rules);
+
         $carts = Cart::with('product')->where('user_id', Auth::id())->get();
         if ($carts->count() == 0) {
             return redirect('/');
@@ -41,17 +57,23 @@ class OrderController extends Controller
             $totalHarga += $cart->product->harga * $cart->jumlah;
         }
 
-        
+        // 2. Set alamat default jika pelanggan memilih Booking
+        $alamatJalan = $request->tipe_pesanan === 'Booking' ? 'Ambil di Toko' : $request->alamat_jalan;
+        $wilayah = $request->tipe_pesanan === 'Booking' ? 'Ambil di Toko' : $request->wilayah;
+        $alamatLengkap = $request->tipe_pesanan === 'Booking' ? 'Pesanan Booking - Ambil di Toko D Vel Jeans' : $request->alamat_lengkap;
+
+        // 3. Simpan data pesanan
         $order = Order::create([
             'user_id' => Auth::id(),
             'nama_depan' => $request->nama_depan,
             'nama_belakang' => $request->nama_belakang,
-            'alamat_jalan' => $request->alamat_jalan,
-            'wilayah' => $request->wilayah,
+            'alamat_jalan' => $alamatJalan,
+            'wilayah' => $wilayah,
             'no_hp' => $request->no_hp,
-            'alamat_lengkap' => $request->alamat_lengkap,
+            'alamat_lengkap' => $alamatLengkap,
             'total_harga' => $totalHarga,
-            'status' => 'Belum Bayar'
+            'status' => 'Belum Bayar',
+            'tipe_pesanan' => $request->tipe_pesanan // Menyimpan tipe pesanan ke database
         ]);
 
         // Pindahkan ke Order Detail & Kurangi Stok
@@ -75,15 +97,27 @@ class OrderController extends Controller
         // Kosongkan keranjang
         Cart::where('user_id', Auth::id())->delete();
 
-        // Arahkan ke halaman instruksi pembayaran
+        // 4. Arahkan ke halaman sukses yang berbeda sesuai tipe pesanan
+        if ($request->tipe_pesanan === 'Booking') {
+            return redirect()->route('booking.success', $order->id);
+        }
+
+        // Default redirect untuk pesanan Online
         return redirect()->route('checkout.success', $order->id);
     }
 
-    // Menampilkan halaman Instruksi Pembayaran (Struk)
+    // Menampilkan halaman Instruksi Pembayaran (Online)
     public function success($id)
     {
         $order = Order::where('user_id', Auth::id())->findOrFail($id);
         return view('checkout-success', compact('order'));
+    }
+
+    // Menampilkan halaman Bukti Booking (Ambil di Toko)
+    public function bookingSuccess($id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        return view('booking-success', compact('order'));
     }
 
     // Memproses unggahan foto bukti transfer
@@ -109,6 +143,7 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success', 'Bukti pembayaran berhasil diunggah! Pesanan Anda segera kami proses.');
     }
+    
     // Menampilkan riwayat pesanan khusus untuk pelanggan yang login
     public function history()
     {

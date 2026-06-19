@@ -60,7 +60,11 @@
         @forelse($orders as $order)
             <div class="order-card">
                 <div class="order-info">
-                    <div class="order-id">Order #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</div>
+                    <div class="order-id">Order #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
+                        @if($order->tipe_pesanan == 'Booking')
+                            <span style="font-size: 10px; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 5px;">BOOKING TOKO</span>
+                        @endif
+                    </div>
                     <div class="order-date">{{ $order->created_at->format('d M Y, H:i') }} WIB</div>
                     <div class="order-price">Total: Rp {{ number_format($order->total_harga, 0, ',', '.') }}</div>
                 </div>
@@ -68,9 +72,13 @@
                 <div class="order-status">
                     @php
                         $badgeClass = '';
-                        if($order->status == 'Belum Bayar') $badgeClass = 'badge-belum-bayar';
-                        elseif($order->status == 'Diproses') $badgeClass = 'badge-diproses';
-                        elseif($order->status == 'Dikirim') $badgeClass = 'badge-dikirim';
+                        if($order->status == 'Belum Bayar') {
+                            $badgeClass = 'badge-belum-bayar';
+                        } elseif($order->status == 'Diproses') {
+                            $badgeClass = 'badge-diproses';
+                        } elseif($order->status == 'Dikirim') {
+                            $badgeClass = 'badge-dikirim';
+                        }
                     @endphp
                     
                     <span class="badge {{ $badgeClass }}">{{ $order->status }}</span>
@@ -85,9 +93,24 @@
                     @endif
 
                     @if($order->status == 'Belum Bayar' && empty($order->bukti_pembayaran))
-                        <a href="{{ route('checkout.success', $order->id) }}" class="btn-upload-susulan">Upload Bukti Bayar</a>
+                        
+                        @if($order->tipe_pesanan == 'Booking')
+                            <div style="text-align: right;">
+                                <span style="display: block; font-size: 12px; color: #15803d; font-weight: 800; margin-bottom: 6px;">📍 Bayar Langsung di Toko</span>
+                                <a href="{{ route('booking.success', $order->id) }}" class="btn-action" style="background: #0f172a;">Lihat Kupon Booking</a>
+                            </div>
+                        @else
+                            <a href="{{ route('checkout.success', $order->id) }}" class="btn-upload-susulan">Upload Bukti Bayar</a>
+                        @endif
+
                     @else
-                        <a href="{{ route('checkout.success', $order->id) }}" class="btn-action">Lihat Detail</a>
+                        
+                        @if($order->tipe_pesanan == 'Booking')
+                            <a href="{{ route('booking.success', $order->id) }}" class="btn-action">Lihat Detail Booking</a>
+                        @else
+                            <a href="{{ route('checkout.success', $order->id) }}" class="btn-action">Lihat Detail</a>
+                        @endif
+
                     @endif
                 </div>
             </div>

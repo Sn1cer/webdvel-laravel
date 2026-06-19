@@ -45,6 +45,9 @@
         .badge-diproses { background: #dbeafe; color: #1d4ed8; }
         .badge-dikirim { background: #dcfce3; color: #15803d; }
         .alert-success { background: #dcfce3; color: #166534; padding: 15px; border-radius: 8px; font-weight: 600; border: 1px solid #bbf7d0; margin-bottom: 20px;}
+        
+        .badge-tipe-booking { background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}
+        .badge-tipe-online { background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}
 
         /* MODAL POP-UP */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -57,21 +60,9 @@
 
         /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 768px) {
-            .tabs-container {
-                /* Mengizinkan tab menu di-scroll ke samping jika layarnya kecil */
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                padding-bottom: 15px;
-            }
-            .table-wrapper {
-                /* Mengizinkan tabel digeser ke kiri/kanan di layar HP */
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            table {
-                /* Memaksa tabel memiliki lebar minimum agar form aksi admin tidak gepeng */
-                min-width: 800px;
-            }
+            .tabs-container { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 15px; }
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 800px; }
         }
     </style>
 
@@ -82,7 +73,7 @@
     @php $currentStatus = request('status', 'Semua'); @endphp
     <div class="tabs-container">
         <a href="{{ route('admin.orders.index') }}" class="tab-btn {{ $currentStatus == 'Semua' ? 'tab-active' : '' }}">Semua Order</a>
-        <a href="{{ route('admin.orders.index', ['status' => 'Belum Bayar']) }}" class="tab-btn {{ $currentStatus == 'Belum Bayar' ? 'tab-active' : '' }}">⏳ Belum Bayar</a>
+        <a href="{{ route('admin.orders.index', ['status' => 'Belum Bayar']) }}" class="tab-btn {{ $currentStatus == 'Belum Bayar' ? 'tab-active' : '' }}">⏳ Belum Bayar / Diambil</a>
         <a href="{{ route('admin.orders.index', ['status' => 'Diproses']) }}" class="tab-btn {{ $currentStatus == 'Diproses' ? 'tab-active' : '' }}">📦 Siap Dikirim (Diproses)</a>
         <a href="{{ route('admin.orders.index', ['status' => 'Dikirim']) }}" class="tab-btn {{ $currentStatus == 'Dikirim' ? 'tab-active' : '' }}">🚚 Selesai (Dikirim)</a>
     </div>
@@ -102,7 +93,14 @@
                 @forelse($orders as $order)
                     <tr>
                         <td>
-                            <div class="td-title">#ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</div>
+                            <div class="td-title">
+                                #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
+                                @if($order->tipe_pesanan == 'Booking')
+                                    <span class="badge-tipe-booking">BOOKING</span>
+                                @else
+                                    <span class="badge-tipe-online">ONLINE</span>
+                                @endif
+                            </div>
                             <div class="td-sub" style="color: var(--accent); font-weight: 600; margin-top: 4px;">⏱️ {{ \Carbon\Carbon::parse($order->created_at)->locale('id')->diffForHumans() }}</div>
                         </td>
                         <td>
@@ -114,7 +112,10 @@
                         <td>
                             <div class="td-title" style="color: var(--accent);">Rp {{ number_format($order->total_harga, 0, ',', '.') }}</div>
                             <div class="td-sub">{{ $order->details->sum('jumlah') }} Potong Celana</div>
-                            @if($order->bukti_pembayaran)
+                            
+                            @if($order->tipe_pesanan == 'Booking')
+                                <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 8px; background: #dcfce3; padding: 4px 8px; border-radius: 4px; display: inline-block;">📍 Bayar Langsung di Toko</div>
+                            @elseif($order->bukti_pembayaran)
                                 <a href="{{ asset('images/bukti/' . $order->bukti_pembayaran) }}" target="_blank" class="btn-bukti">Lihat Struk ↗</a>
                             @endif
                         </td>
@@ -122,20 +123,34 @@
                             @php
                                 $bc = $order->status == 'Belum Bayar' ? 'badge-belum-bayar' : ($order->status == 'Diproses' ? 'badge-diproses' : 'badge-dikirim');
                             @endphp
-                            <span class="badge {{ $bc }}">{{ $order->status }}</span>
-                            @if($order->resi)
+                            <span class="badge {{ $bc }}">
+                                {{ $order->status == 'Dikirim' && $order->tipe_pesanan == 'Booking' ? 'Selesai Diambil' : $order->status }}
+                            </span>
+                            @if($order->resi && $order->resi !== 'Diambil di Toko')
                                 <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 5px;">Resi: {{ $order->resi }}</div>
                             @endif
                         </td>
                         <td style="width: 180px;">
                             <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" style="display: flex; flex-direction: column; gap: 6px;">
                                 @csrf @method('PATCH')
+                                
                                 <select name="status" class="status-select">
-                                    <option value="Belum Bayar" {{ $order->status == 'Belum Bayar' ? 'selected' : '' }}>Belum Bayar</option>
-                                    <option value="Diproses" {{ $order->status == 'Diproses' ? 'selected' : '' }}>Diproses</option>
-                                    <option value="Dikirim" {{ $order->status == 'Dikirim' ? 'selected' : '' }}>Dikirim</option>
+                                    @if($order->tipe_pesanan == 'Booking')
+                                        <option value="Belum Bayar" {{ $order->status == 'Belum Bayar' ? 'selected' : '' }}>Menunggu Diambil</option>
+                                        <option value="Dikirim" {{ $order->status == 'Dikirim' ? 'selected' : '' }}>Selesai / Lunas</option>
+                                    @else
+                                        <option value="Belum Bayar" {{ $order->status == 'Belum Bayar' ? 'selected' : '' }}>Belum Bayar</option>
+                                        <option value="Diproses" {{ $order->status == 'Diproses' ? 'selected' : '' }}>Diproses</option>
+                                        <option value="Dikirim" {{ $order->status == 'Dikirim' ? 'selected' : '' }}>Dikirim</option>
+                                    @endif
                                 </select>
-                                <input type="text" name="resi" value="{{ $order->resi }}" placeholder="Input Resi..." class="status-select">
+                                
+                                @if($order->tipe_pesanan == 'Online')
+                                    <input type="text" name="resi" value="{{ $order->resi }}" placeholder="Input Resi..." class="status-select">
+                                @else
+                                    <input type="hidden" name="resi" value="Diambil di Toko">
+                                @endif
+                                
                                 <button type="submit" class="btn-update">Simpan Perubahan</button>
                             </form>
                         </td>
@@ -147,6 +162,16 @@
                             <h2 style="margin: 0 0 20px 0; font-size: 20px; font-family: 'DM Serif Display', serif;">Detail Pesanan #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h2>
                             
                             <div class="info-group">
+                                <div class="info-label">Tipe Pesanan</div>
+                                <div class="info-value">
+                                    @if($order->tipe_pesanan == 'Booking')
+                                        🛍️ Ambil di Toko (Booking)
+                                    @else
+                                        🚚 Kirim ke Alamat (Online)
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="info-group">
                                 <div class="info-label">Nama Pelanggan</div>
                                 <div class="info-value">{{ $order->nama_depan }} {{ $order->nama_belakang }}</div>
                             </div>
@@ -155,7 +180,7 @@
                                 <div class="info-value">{{ $order->no_hp }}</div>
                             </div>
                             <div class="info-group" style="border-bottom: none;">
-                                <div class="info-label">Alamat Lengkap Pengiriman (Penting untuk Label)</div>
+                                <div class="info-label">Alamat / Keterangan</div>
                                 <div class="info-value" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-top: 5px;">
                                     {{ $order->wilayah }}
                                 </div>

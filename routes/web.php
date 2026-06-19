@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout', [OrderController::class, 'store'])->name('checkout.store');
     Route::get('/checkout/sukses/{id}', [OrderController::class, 'success'])->name('checkout.success');
     Route::post('/checkout/upload-bukti/{id}', [OrderController::class, 'uploadBukti'])->name('checkout.uploadBukti');
+    Route::get('/booking-success/{id}', [OrderController::class, 'bookingSuccess'])->name('booking.success');
     
     // Rute Riwayat Pesanan
     Route::get('/pesanan-saya', [OrderController::class, 'history'])->name('orders.history');
