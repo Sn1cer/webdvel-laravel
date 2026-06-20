@@ -86,6 +86,8 @@ Route::middleware('auth')->group(function () {
     
     // Rute Riwayat Pesanan
     Route::get('/pesanan-saya', [OrderController::class, 'history'])->name('orders.history');
+    // Rute Webhook Midtrans
+    Route::post('/midtrans/callback', [\App\Http\Controllers\OrderController::class, 'callback']);
 }); 
 
 require __DIR__.'/auth.php';

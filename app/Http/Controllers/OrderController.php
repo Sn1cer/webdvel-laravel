@@ -97,59 +97,82 @@ class OrderController extends Controller
         // Kosongkan keranjang
         Cart::where('user_id', Auth::id())->delete();
 
-        // 4. Arahkan ke halaman sukses yang berbeda sesuai tipe pesanan
         if ($request->tipe_pesanan === 'Booking') {
             return redirect()->route('booking.success', $order->id);
         }
 
-        // Default redirect untuk pesanan Online
         return redirect()->route('checkout.success', $order->id);
     }
 
-    // Menampilkan halaman Instruksi Pembayaran (Online)
     public function success($id)
     {
         $order = Order::where('user_id', Auth::id())->findOrFail($id);
-        return view('checkout-success', compact('order'));
-    }
 
-    // Menampilkan halaman Bukti Booking (Ambil di Toko)
-    public function bookingSuccess($id)
-    {
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
-        return view('booking-success', compact('order'));
-    }
-
-    // Memproses unggahan foto bukti transfer
-    public function uploadBukti(Request $request, $id)
-    {
-        $request->validate([
-            'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
-
-        if ($request->hasFile('bukti_pembayaran')) {
-            $file = $request->file('bukti_pembayaran');
-            $nama_file = time() . "_" . $file->getClientOriginalName();
+        if ($order->tipe_pesanan == 'Online' && $order->status == 'Belum Bayar' && empty($order->snap_token)) {
             
-            $file->move(public_path('images/bukti'), $nama_file);
+            \Midtrans\Config::$serverKey = config('midtrans.server_key');
+            \Midtrans\Config::$isProduction = config('midtrans.is_production');
+            \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
+            \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
 
-            $order->update([
-                'bukti_pembayaran' => $nama_file,
-                'status' => 'Diproses'
-            ]);
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $order->id,
+                    'gross_amount' => $order->total_harga,
+                ],
+                'customer_details' => [
+                    'first_name' => $order->nama_depan,
+                    'last_name' => $order->nama_belakang,
+                    'phone' => $order->no_hp,
+                ],
+            ];
+
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            $order->snap_token = $snapToken;
+            $order->save();
         }
 
-        return redirect()->back()->with('success', 'Bukti pembayaran berhasil diunggah! Pesanan Anda segera kami proses.');
+        return view('checkout-success', compact('order'));
     }
     
-    // Menampilkan riwayat pesanan khusus untuk pelanggan yang login
     public function history()
     {
-        // Ambil pesanan milik user ini saja, urutkan dari yang paling baru
         $orders = Order::where('user_id', Auth::id())->latest()->get();
         
         return view('order-history', compact('orders'));
+    }
+    public function callback(Request $request)
+    {
+        $serverKey = config('midtrans.server_key');
+        
+        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+        
+        if ($hashed == $request->signature_key) {
+            $order = Order::with('details')->find($request->order_id);
+            
+            if ($order) {
+                if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+                    $order->update([
+                        'status' => 'Diproses',
+                        'bukti_pembayaran' => 'midtrans_verified'
+                    ]);
+                } 
+                elseif ($request->transaction_status == 'cancel' || $request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
+                    
+                    if ($order->status !== 'Dibatalkan') {
+                        foreach ($order->details as $detail) {
+                            $produk = \App\Models\Product::find($detail->product_id);
+                            if ($produk) {
+                                $produk->stok += $detail->jumlah; 
+                                $produk->save();
+                            }
+                        }
+                    }
+                    $order->update(['status' => 'Dibatalkan']);
+                }
+            }
+        }
+        
+        return response()->json(['message' => 'Callback received']);
     }
 }
