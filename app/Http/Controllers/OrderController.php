@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    // Menampilkan halaman Checkout
+    // halaman Checkout
     public function create()
     {
         $carts = Cart::with('product')->where('user_id', Auth::id())->get();
