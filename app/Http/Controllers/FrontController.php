@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product; 
+use App\Models\Banner;
 use Illuminate\Http\Request;
 
 class FrontController extends Controller
@@ -13,7 +14,8 @@ class FrontController extends Controller
         $products = Product::latest()->get();
         
         // send to (welcome.blade.php)
-        return view('welcome', compact('products'));
+        $banners = Banner::where('is_active', true)->latest()->get();
+        return view('welcome', compact('products', 'banners'));
     }
     public function show($id)
     {

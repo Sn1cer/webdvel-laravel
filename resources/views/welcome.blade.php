@@ -55,7 +55,7 @@
     /* RESPONSIVE KHUSUS BERANDA */
     @media (max-width: 768px) {
         .slide { padding: 0 20px; }
-        .hero-content h1 { font-size: 40px; /* Mengecilkan teks judul di HP */ }
+        .hero-content h1 { font-size: 40px; }
         .hero-details { font-size: 14px; }
         .section-title { font-size: 26px; }
     }
@@ -64,38 +64,33 @@
 
 @section('content')
     <header class="hero-slider">
-        <div class="slide active" style="background-image: url('https://image.qwenlm.ai/public_source/be392019-7656-40f4-a58a-6346f73f6d9a/ef8dfa32d-eb3b-4fb7-8e6c-ffdf83b2a265.png');">
-            <div class="hero-content">
-                <span class="hero-title-script">D'Vel Jeans</span>
-                <h1>Temukan Gaya Denim Terbaikmu</h1>
-                <p class="hero-details">Rp 350.000<br>Limited Edition</p>
-                <a href="#katalog" class="btn-hero">Mulai Belanja</a>
+        @forelse($banners as $index => $banner)
+            <div class="slide {{ $index == 0 ? 'active' : '' }}" style="background-image: url('{{ asset('images/banners/' . $banner->gambar) }}');">
+                <div class="hero-content">
+                    <span class="hero-title-script">D'Vel Jeans</span>
+                    <h1>{{ $banner->judul ?? 'Temukan Gaya Denim Terbaikmu' }}</h1>
+                    <p class="hero-details">{{ $banner->subjudul ?? 'Koleksi Premium Terbatas' }}</p>
+                    <a href="#katalog" class="btn-hero">Mulai Belanja</a>
+                </div>
             </div>
-        </div>
-
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1200&auto=format&fit=crop');">
-            <div class="hero-content">
-                <span class="hero-title-script">Koleksi Baru</span>
-                <h1>Jaket Denim Klasik Original</h1>
-                <p class="hero-details">Bahan tebal, jahitan rapi, gaya tak lekang waktu.</p>
-                <a href="#katalog" class="btn-hero">Lihat Koleksi</a>
+        @empty
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1200&auto=format&fit=crop');">
+                <div class="hero-content">
+                    <span class="hero-title-script">Koleksi Baru</span>
+                    <h1>Selamat Datang di D'Vel Jeans</h1>
+                    <p class="hero-details">Bahan tebal, jahitan rapi, gaya tak lekang waktu.</p>
+                    <a href="#katalog" class="btn-hero">Lihat Koleksi</a>
+                </div>
             </div>
-        </div>
+        @endforelse
 
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=1200&auto=format&fit=crop');">
-            <div class="hero-content">
-                <span class="hero-title-script">Promo Spesial</span>
-                <h1>Diskon Akhir Bulan Hingga 40%</h1>
-                <p class="hero-details">Berlaku untuk semua celana reguler fit.</p>
-                <a href="#katalog" class="btn-hero">Klaim Promo</a>
+        @if($banners->count() > 1)
+            <div class="slider-dots">
+                @foreach($banners as $index => $banner)
+                    <span class="dot {{ $index == 0 ? 'active' : '' }}" onclick="changeSlide({{ $index }})"></span>
+                @endforeach
             </div>
-        </div>
-
-        <div class="slider-dots">
-            <span class="dot active" onclick="changeSlide(0)"></span>
-            <span class="dot" onclick="changeSlide(1)"></span>
-            <span class="dot" onclick="changeSlide(2)"></span>
-        </div>
+        @endif
     </header>
 
     <div class="marquee-strip" aria-hidden="true">
@@ -152,21 +147,27 @@
     const dots = document.querySelectorAll('.dot');
     const totalSlides = slides.length;
 
-    function showSlide(index) {
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-        slides[index].classList.add('active');
-        dots[index].classList.add('active');
-        currentSlide = index;
-    }
+    // Pastikan script hanya berjalan jika ada lebih dari 1 gambar
+    if(totalSlides > 1) {
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            slides[index].classList.add('active');
+            if(dots[index]) {
+                dots[index].classList.add('active');
+            }
+            currentSlide = index;
+        }
 
-    function changeSlide(index) {
-        showSlide(index);
-    }
+        function changeSlide(index) {
+            showSlide(index);
+        }
 
-    setInterval(() => {
-        let nextSlide = (currentSlide + 1) % totalSlides;
-        showSlide(nextSlide);
-    }, 5000);
+        setInterval(() => {
+            let nextSlide = (currentSlide + 1) % totalSlides;
+            showSlide(nextSlide);
+        }, 5000);
+    }
 </script>
 @endpush

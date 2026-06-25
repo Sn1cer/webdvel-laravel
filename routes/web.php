@@ -14,15 +14,13 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PosController;
 use App\Models\Product;
 use App\Http\Controllers\AdminManagementController;
+use App\Http\Controllers\BannerController; 
 
+// --- RUTE BERANDA ---
 Route::get('/', [FrontController::class, 'index'])->name('home');
-Route::get('/', function () {
-    $products = Product::latest()->take(4)->get(); 
-    return view('welcome', compact('products'));
-});
 
+// --- RUTE KATALOG ---
 Route::get('/katalog', function () {
-    // Mengambil semua produk, tapi dibagi per halaman (misal: 12 produk per halaman)
     $products = Product::latest()->paginate(12); 
     return view('katalog', compact('products'));
 })->name('katalog');
@@ -58,6 +56,11 @@ Route::get('/admin/pelanggan', [CustomerController::class, 'index'])->name('admi
 Route::get('/admin/kasir', [PosController::class, 'index'])->name('admin.pos.index');
 Route::post('/admin/kasir/checkout', [PosController::class, 'checkout'])->name('admin.pos.checkout');
 
+// Rute Manajemen Banner
+Route::get('/admin/banners', [BannerController::class, 'index'])->name('admin.banners.index');
+Route::post('/admin/banners', [BannerController::class, 'store'])->name('admin.banners.store');
+Route::delete('/admin/banners/{id}', [BannerController::class, 'destroy'])->name('admin.banners.destroy');
+
 // RUTE KHUSUS OWNER (Admin biasa akan diblokir)
 Route::middleware(['auth', 'owner'])->group(function () {
     // Fitur Pengelolaan Akun Admin
@@ -86,8 +89,10 @@ Route::middleware('auth')->group(function () {
     
     // Rute Riwayat Pesanan
     Route::get('/pesanan-saya', [OrderController::class, 'history'])->name('orders.history');
-    // Rute Webhook Midtrans
-    Route::post('/midtrans/callback', [\App\Http\Controllers\OrderController::class, 'callback']);
 }); 
+
+// --- RUTE WEBHOOK MIDTRANS ---
+// Harus di luar middleware auth agar server Midtrans bisa mengirim data kemari tanpa perlu login
+Route::post('/midtrans/callback', [OrderController::class, 'callback']);
 
 require __DIR__.'/auth.php';

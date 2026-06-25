@@ -61,6 +61,9 @@
         
         <div class="menu-label">Operasional Toko</div>
         
+        <a href="{{ route('admin.banners.index') }}" class="nav-item {{ request()->routeIs('admin.banners.*') ? 'nav-active' : '' }}">
+            🖼️ Manajemen Banner
+        </a>
         <a href="{{ route('admin.pos.index') }}" class="nav-item {{ request()->routeIs('admin.pos.*') ? 'nav-active' : '' }}">
             🛒 Kasir Offline (POS)
         </a>

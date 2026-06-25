@@ -134,6 +134,13 @@ class OrderController extends Controller
 
         return view('checkout-success', compact('order'));
     }
+
+    // FUNGSI INI DITAMBAHKAN KEMBALI
+    public function bookingSuccess($id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        return view('booking-success', compact('order'));
+    }
     
     public function history()
     {
@@ -141,6 +148,7 @@ class OrderController extends Controller
         
         return view('order-history', compact('orders'));
     }
+
     public function callback(Request $request)
     {
         $serverKey = config('midtrans.server_key');
