@@ -41,7 +41,7 @@
         <div class="payment-card">
             <div class="icon-success">💳</div>
             <h1>Selesaikan Pembayaran</h1>
-            <div class="order-id">Order ID: #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</div>
+            <div class="order-id">Order ID: #{{ $order->nomor_pesanan }}</div>
             
             <div class="bill-box">
                 <p>Total Tagihan Pesanan:</p>

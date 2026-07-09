@@ -60,7 +60,7 @@
         @forelse($orders as $order)
             <div class="order-card">
                 <div class="order-info">
-                    <div class="order-id">Order #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
+                    <div class="order-id">Order #{{ $order->nomor_pesanan }}
                         @if($order->tipe_pesanan == 'Booking')
                             <span style="font-size: 10px; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 5px;">BOOKING TOKO</span>
                         @endif
@@ -84,7 +84,7 @@
                     <span class="badge {{ $badgeClass }}">{{ $order->status }}</span>
                     <br>
                     
-                    @if($order->resi)
+                    @if($order->resi && $order->tipe_pesanan == 'Online' && !str_starts_with($order->resi, 'ONL-'))
                         <div style="margin-top: 5px; margin-bottom: 12px; padding: 8px 15px; background: #fffbeb; border: 1px dashed #d97706; border-radius: 8px; font-size: 12px; text-align: right; display: inline-block;">
                             <span style="color: #b45309; font-weight: 600; display: block; margin-bottom: 2px;">🚚 No. Resi Pengiriman:</span>
                             <span style="color: #d97706; font-weight: 800; font-size: 15px; letter-spacing: 1px;">{{ $order->resi }}</span>

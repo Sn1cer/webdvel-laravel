@@ -68,7 +68,7 @@
                 <tr>
                     <td class="text-center">{{ $no++ }}</td>
                     <td>{{ $order->created_at->format('d/m/Y') }}</td>
-                    <td>#ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
+                    <td>#{{ $order->nomor_pesanan }}</td>
                     <td>{{ $order->nama_depan }} {{ $order->nama_belakang }}</td>
                     <td class="text-right">{{ number_format($order->total_harga, 0, ',', '.') }}</td>
                 </tr>

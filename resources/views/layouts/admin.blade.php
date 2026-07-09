@@ -43,6 +43,12 @@
             .grid-container-responsive { grid-template-columns: 1fr !important; }
             .table-responsive { overflow-x: auto; }
         }
+        
+        /* SEMBUNYIKAN SIDEBAR SAAT PRINT STRUK */
+        @media print {
+            .sidebar, .topbar { display: none !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; }
+        }
     </style>
 </head>
 <body>
@@ -68,13 +74,10 @@
             🛒 Kasir Offline (POS)
         </a>
         <a href="{{ route('products.index') }}" class="nav-item {{ request()->routeIs('products.*') ? 'nav-active' : '' }}">
-            👖 Manajemen Produk
+            📦 Manajemen Produk & Stok
         </a>
         <a href="{{ route('admin.orders.index') }}" class="nav-item {{ request()->routeIs('admin.orders.*') ? 'nav-active' : '' }}">
-            📦 Pesanan Masuk
-        </a>
-        <a href="{{ route('admin.stocks.index') }}" class="nav-item {{ request()->routeIs('admin.stocks.*') ? 'nav-active' : '' }}">
-            🏭 Stok Gudang
+            🚚 Pesanan Masuk
         </a>
         
         <div class="menu-label" style="margin-top: 20px;">CRM & Laporan</div>
@@ -121,7 +124,7 @@
         }
 
         hamburgerBtn.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', toggleSidebar); // Tutup sidebar jika layar gelap diklik
+        overlay.addEventListener('click', toggleSidebar); 
     </script>
 
     @stack('scripts')

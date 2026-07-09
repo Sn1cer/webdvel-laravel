@@ -44,7 +44,7 @@
                 -webkit-overflow-scrolling: touch;
             }
             table {
-                min-width: 700px; /* Mencegah kolom Total Pemasukan menjadi gepeng */
+                min-width: 700px;
             }
         }
     </style>
@@ -80,7 +80,7 @@
                 @forelse($orders as $order)
                     <tr>
                         <td>{{ $order->created_at->format('d M Y, H:i') }}</td>
-                        <td style="font-weight: 700;">#ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
+                        <td style="font-weight: 700;">#{{ $order->nomor_pesanan }}</td>
                         <td>{{ $order->nama_depan }} {{ $order->nama_belakang }}</td>
                         <td><span style="background: #dcfce3; color: #15803d; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase;">{{ $order->status }}</span></td>
                         <td style="text-align: right; font-weight: 600;">Rp {{ number_format($order->total_harga, 0, ',', '.') }}</td>

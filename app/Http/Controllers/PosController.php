@@ -15,7 +15,6 @@ class PosController extends Controller
     public function index()
     {
         $products = Product::with('sizes')->where('stok', '>', 0)->get();
-        
         return view('admin.pos.index', compact('products'));
     }
 
@@ -34,7 +33,6 @@ class PosController extends Controller
                 $totalHarga += ($item['price'] * $item['qty']);
             }
 
-            // Membuat data Order Induk
             $order = Order::create([
                 'user_id' => Auth::id() ?? 1,
                 'nama_depan' => 'Pelanggan',
@@ -49,26 +47,21 @@ class PosController extends Controller
                 'resi' => 'POS-OFFLINE-' . strtoupper(uniqid())
             ]);
 
-            // Memproses rincian barang, memotong stok global, dan memotong stok ukuran
             foreach ($cart as $item) {
-                
-                // 1. Simpan ke OrderDetail
                 OrderDetail::create([
                     'order_id' => $order->id,
                     'product_id' => $item['id'],
                     'jumlah' => $item['qty'],
                     'harga_satuan' => $item['price'], 
-                    'ukuran' => $item['ukuran'] ?? '-' // Simpan ukuran spesifik ke nota
+                    'ukuran' => $item['ukuran'] ?? '-' 
                 ]);
 
-                // 2. Potong Stok Global (Tabel Products)
                 $product = Product::find($item['id']);
                 if ($product) {
                     $product->stok -= $item['qty'];
                     $product->save();
                 }
 
-                // 3. Potong Stok Spesifik per Ukuran (Tabel Product_Sizes)
                 if (isset($item['ukuran'])) {
                     $productSize = ProductSize::where('product_id', $item['id'])
                                         ->where('ukuran', $item['ukuran'])
@@ -82,7 +75,14 @@ class PosController extends Controller
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Pembayaran Offline Berhasil! Stok varian ukuran telah otomatis dikurangi.');
+
+            // PENTING: Load relasi detail & produk agar datanya bisa dicetak di struk
+            $order->load('details.product');
+
+            // Mengembalikan pesan sukses, sekaligus mengirimkan data $order ke dalam session 'print_order'
+            return redirect()->back()
+                ->with('success', 'Pembayaran Offline Berhasil! Stok varian ukuran telah otomatis dikurangi.')
+                ->with('print_order', $order);
             
         } catch (\Exception $e) {
             DB::rollBack();

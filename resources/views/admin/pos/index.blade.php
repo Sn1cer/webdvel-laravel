@@ -61,6 +61,34 @@
         .btn-add { padding: 10px 15px; border-radius: 6px; border: none; background: var(--text); color: white; cursor: pointer; font-weight: 600;}
         .btn-add:disabled { background: #94a3b8; cursor: not-allowed; }
 
+        /* --- CSS KHUSUS PRINT STRUK (THERMAL PRINTER) --- */
+        #print-area { display: none; } /* Sembunyikan saat mode layar PC biasa */
+
+        @media print {
+            /* Matikan pengaturan kertas default agar mengikuti ukuran printer */
+            @page { margin: 0; size: auto; }
+            
+            /* Sembunyikan SEMUA elemen web admin agar kertas bersih */
+            body * { visibility: hidden; }
+            
+            /* Tampilkan dan posisikan area cetak secara paksa */
+            #print-area { 
+                display: block !important; 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; /* Fleksibel untuk 58mm atau 80mm */
+                padding: 5mm; 
+                box-sizing: border-box;
+                font-family: 'Courier New', Courier, monospace; /* Font mesin kasir */
+                font-size: 12px;
+                color: #000;
+                background: #fff;
+                z-index: 9999;
+            }
+            #print-area * { visibility: visible; }
+        }
+
         @media (max-width: 768px) {
             .pos-container { flex-direction: column; height: auto; margin: -15px; }
             .product-area { padding: 20px; overflow-y: visible; }
@@ -69,6 +97,83 @@
         }
     </style>
 
+    @if(session('print_order'))
+        <div id="print-area">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h2 style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">D'VEL JEANS</h2>
+                <div style="font-size: 12px; margin-top: 5px;">
+                    Jl. Raya Cimahi, Jawa Barat<br>
+                    Tlp: 0812-3456-7890
+                </div>
+            </div>
+            
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            
+            <div style="font-size: 12px; margin-bottom: 10px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td>Waktu</td>
+                        <td style="text-align: right;">{{ session('print_order')->created_at->format('d/m/Y H:i') }}</td>
+                    </tr>
+                    <tr>
+                        <td>No. Resi</td>
+                        <td style="text-align: right;">{{ session('print_order')->resi }}</td>
+                    </tr>
+                    <tr>
+                        <td>Kasir</td>
+                        <td style="text-align: right;">{{ auth()->user()->name ?? 'Admin' }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            
+            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                @foreach(session('print_order')->details as $detail)
+                <tr>
+                    <td colspan="2" style="padding-bottom: 2px;">
+                        <strong>{{ $detail->product->nama_produk }}</strong>
+                        @if($detail->ukuran && $detail->ukuran !== '-')
+                            <br><small>Size: {{ $detail->ukuran }}</small>
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom: 8px;">
+                        {{ $detail->jumlah }} x {{ number_format($detail->harga_satuan, 0, ',', '.') }}
+                    </td>
+                    <td style="text-align: right; padding-bottom: 8px;">
+                        {{ number_format($detail->jumlah * $detail->harga_satuan, 0, ',', '.') }}
+                    </td>
+                </tr>
+                @endforeach
+            </table>
+            
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            
+            <table style="width: 100%; font-size: 14px; font-weight: bold;">
+                <tr>
+                    <td>TOTAL</td>
+                    <td style="text-align: right;">Rp {{ number_format(session('print_order')->total_harga, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td>TUNAI</td>
+                    <td style="text-align: right;">Rp {{ number_format(session('print_order')->total_harga, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td>KEMBALI</td>
+                    <td style="text-align: right;">Rp 0</td>
+                </tr>
+            </table>
+            
+            <div style="border-bottom: 1px dashed #000; margin-top: 10px; margin-bottom: 10px;"></div>
+            
+            <div style="text-align: center; font-size: 11px; margin-top: 15px;">
+                <strong>Terima Kasih!</strong><br>
+                Barang yang sudah dibeli<br>tidak dapat ditukar/dikembalikan.
+            </div>
+        </div>
+    @endif
     <div class="pos-container">
         <div class="product-area">
             <h2 class="page-title">Pilih Barang Pelanggan (Offline)</h2>
@@ -121,15 +226,13 @@
         </div>
     </div>
 
-    <!-- MODAL PILIH UKURAN -->
     <div class="modal-overlay" id="sizeModal">
         <div class="modal-box">
             <div class="modal-title" id="modalProductName">Nama Produk</div>
             <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Pilih ukuran yang dibeli pelanggan:</p>
             
             <div class="size-grid" id="modalSizeGrid">
-                <!-- Tombol ukuran akan dirender di sini via JS -->
-            </div>
+                </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeSizeModal()">Batal</button>
@@ -142,8 +245,6 @@
 @push('scripts')
     <script>
         let cart = [];
-
-        // Variabel penampung sementara untuk Modal
         let tempProduct = null;
         let tempSelectedSize = null;
 
@@ -176,14 +277,10 @@
                         btn.title = "Stok Habis";
                     } else {
                         btn.onclick = function() {
-                            // Hapus status selected dari tombol lain
                             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
                             this.classList.add('selected');
                             
-                            tempSelectedSize = {
-                                ukuran: sizeObj.ukuran,
-                                stok: sizeObj.stok
-                            };
+                            tempSelectedSize = { ukuran: sizeObj.ukuran, stok: sizeObj.stok };
                             document.getElementById('btnConfirmAdd').disabled = false;
                         };
                     }
@@ -207,7 +304,6 @@
 
         // --- FUNGSI KERANJANG ---
         function addToCart(id, name, price, ukuran, maxStock) {
-            // Unik ID gabungan id produk dan ukuran agar kasir bisa beli produk sama beda ukuran
             let uniqueId = id + '-' + ukuran; 
             let existingItem = cart.find(item => item.uniqueId === uniqueId);
             
@@ -281,5 +377,15 @@
                 document.getElementById('checkout-form').submit();
             }
         }
+
+        // --- SCRIPT AUTO PRINT JIKA ADA SESSION CETAK STRUK ---
+        @if(session('print_order'))
+            document.addEventListener('DOMContentLoaded', function() {
+                // Menunda trigger print selama setengah detik agar font & CSS termuat sempurna
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            });
+        @endif
     </script>
 @endpush

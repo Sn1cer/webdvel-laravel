@@ -65,6 +65,7 @@ Route::delete('/admin/banners/{id}', [BannerController::class, 'destroy'])->name
 Route::middleware(['auth', 'owner'])->group(function () {
     // Fitur Pengelolaan Akun Admin
     Route::get('/admin/user-management', [AdminManagementController::class, 'index'])->name('admin.user-management.index');
+    Route::post('/admin/user-management', [AdminManagementController::class, 'store'])->name('admin.user-management.store'); // <-- Rute Tambah Admin Baru
     Route::patch('/admin/user-management/{user}', [AdminManagementController::class, 'updateRole'])->name('admin.user-management.update-role');
     
     // Fitur Laporan Penjualan (Hanya Owner yang boleh cetak laporan)

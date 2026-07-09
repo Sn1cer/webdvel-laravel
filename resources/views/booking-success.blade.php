@@ -130,7 +130,7 @@
             <div class="order-card">
                 <div class="order-row">
                     <span class="row-label">Nomor Pesanan</span>
-                    <span class="row-value">#ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</span>
+                    <span class="row-value">#{{ $order->nomor_pesanan }}</span>
                 </div>
                 <div class="order-row">
                     <span class="row-label">Tanggal Booking</span>

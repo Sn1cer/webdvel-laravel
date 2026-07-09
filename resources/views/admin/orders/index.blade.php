@@ -94,9 +94,11 @@
                     <tr>
                         <td>
                             <div class="td-title">
-                                #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
+                                #{{ $order->nomor_pesanan }}
                                 @if($order->tipe_pesanan == 'Booking')
                                     <span class="badge-tipe-booking">BOOKING</span>
+                                @elseif($order->tipe_pesanan == 'POS Offline')
+                                    <span class="badge-tipe-booking" style="background: #fef08a; color: #92400e;">POS</span>
                                 @else
                                     <span class="badge-tipe-online">ONLINE</span>
                                 @endif
@@ -126,7 +128,7 @@
                             <span class="badge {{ $bc }}">
                                 {{ $order->status == 'Dikirim' && $order->tipe_pesanan == 'Booking' ? 'Selesai Diambil' : $order->status }}
                             </span>
-                            @if($order->resi && $order->resi !== 'Diambil di Toko')
+                            @if($order->resi && $order->resi !== 'Diambil di Toko' && !str_starts_with($order->resi, 'POS-'))
                                 <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 5px;">Resi: {{ $order->resi }}</div>
                             @endif
                         </td>
@@ -146,9 +148,9 @@
                                 </select>
                                 
                                 @if($order->tipe_pesanan == 'Online')
-                                    <input type="text" name="resi" value="{{ $order->resi }}" placeholder="Input Resi..." class="status-select">
+                                    <input type="text" name="resi" value="{{ $order->resi }}" placeholder="Input Resi Pengiriman..." class="status-select">
                                 @else
-                                    <input type="hidden" name="resi" value="Diambil di Toko">
+                                    <input type="hidden" name="resi" value="{{ $order->resi }}">
                                 @endif
                                 
                                 <button type="submit" class="btn-update">Simpan Perubahan</button>
@@ -159,13 +161,15 @@
                     <div id="modal-{{ $order->id }}" class="modal-overlay">
                         <div class="modal-content">
                             <button class="modal-close" onclick="tutupModal('{{ $order->id }}')">✕</button>
-                            <h2 style="margin: 0 0 20px 0; font-size: 20px; font-family: 'DM Serif Display', serif;">Detail Pesanan #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h2>
+                            <h2 style="margin: 0 0 20px 0; font-size: 20px; font-family: 'DM Serif Display', serif;">Detail Pesanan #{{ $order->nomor_pesanan }}</h2>
                             
                             <div class="info-group">
                                 <div class="info-label">Tipe Pesanan</div>
                                 <div class="info-value">
                                     @if($order->tipe_pesanan == 'Booking')
                                         🛍️ Ambil di Toko (Booking)
+                                    @elseif($order->tipe_pesanan == 'POS Offline')
+                                        🛒 Kasir Toko Fisik (POS)
                                     @else
                                         🚚 Kirim ke Alamat (Online)
                                     @endif
