@@ -48,7 +48,7 @@
             font-family: inherit;
             color: var(--text);
             transition: 0.2s;
-            box-sizing: border-box; /* Mencegah input melebar keluar wadah */
+            box-sizing: border-box;
         }
         .image-upload-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; margin-bottom: 20px;}
         .upload-box { border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; text-align: center; background: #f8fafc;}
@@ -82,7 +82,6 @@
         /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 768px) {
             .form-row {
-                /* Di HP, inputan yang tadinya kiri-kanan berubah menjadi atas-bawah */
                 grid-template-columns: 1fr;
                 gap: 0;
             }
@@ -130,59 +129,56 @@
                 <textarea name="deskripsi" class="form-textarea" rows="4" placeholder="Tuliskan bahan, warna, dan keunggulan produk ini..."></textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Stok Fisik di Gudang <span style="color: var(--red);">*</span></label>
-                    <input type="number" name="stok" class="form-input" placeholder="Jumlah barang tersedia" required>
-                </div>
+            <!-- KOTAK INPUT STOK PER UKURAN (27-40) -->
+            <div class="form-group" style="margin-bottom: 30px;">
+                <label class="form-label" style="font-size: 15px;">Stok Berdasarkan Ukuran (27 - 40)</label>
+                <p style="font-size: 13px; color: var(--text2); margin-top: -5px; margin-bottom: 15px;">*Biarkan angka 0 jika ukuran tersebut sedang kosong.</p>
                 
-                <div class="form-group">
-                    <label style="font-weight: 800; font-size: 16px; margin-top: 20px; display: block;">Galeri Foto Produk</label>
-                    <div class="image-upload-grid">
-                        <div class="upload-box" style="border-color: #d97706; background: #fffbeb;">
-                            <label>Gambar Utama (Sampul) *</label>
-                            <input type="file" name="gambar" accept="image/*" required> </div>
-                        <div class="upload-box">
-                            <label>Gambar 2 (Opsional)</label>
-                            <input type="file" name="gambar_2" accept="image/*">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px;">
+                    @for($i = 27; $i <= 40; $i++)
+                        <div style="text-align: center; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; background: #f8fafc;">
+                            <label style="font-weight: 700; font-size: 14px; display: block; margin-bottom: 5px;">{{ $i }}</label>
+                            <input type="number" name="sizes[{{ $i }}]" value="0" min="0" style="text-align: center; padding: 6px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;">
                         </div>
-                        <div class="upload-box">
-                            <label>Gambar 3 (Opsional)</label>
-                            <input type="file" name="gambar_3" accept="image/*">
-                        </div>
-                        <div class="upload-box">
-                            <label>Gambar 4 (Opsional)</label>
-                            <input type="file" name="gambar_4" accept="image/*">
-                        </div>
-                        <div class="upload-box">
-                            <label>Gambar 5 (Opsional)</label>
-                            <input type="file" name="gambar_5" accept="image/*">
-                        </div>
-                        <div class="upload-box">
-                            <label>Gambar 6 (Opsional)</label>
-                            <input type="file" name="gambar_6" accept="image/*">
-                        </div>
-                        <div class="upload-box">
-                            <label>Gambar 7 (Opsional)</label>
-                            <input type="file" name="gambar_7" accept="image/*">
-                        </div>
-                        <div class="upload-box">
-                            <label>Gambar 8 (Opsional)</label>
-                            <input type="file" name="gambar_8" accept="image/*">
-                        </div>
-                    </div>
+                    @endfor
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Ukuran yang Tersedia (Centang ukuran yang ada) <span style="color: var(--red);">*</span></label>
-                <div style="display: flex; flex-wrap: wrap; gap: 15px; padding: 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                    @for ($i = 27; $i <= 40; $i++)
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text2);">
-                            <input type="checkbox" name="ukuran[]" value="{{ $i }}" style="accent-color: var(--accent); width: 18px; height: 18px;"> 
-                            {{ $i }}
-                        </label>
-                    @endfor
+                <label class="form-label" style="font-size: 16px;">Galeri Foto Produk</label>
+                <div class="image-upload-grid">
+                    <div class="upload-box" style="border-color: #d97706; background: #fffbeb;">
+                        <label>Gambar Utama (Sampul) *</label>
+                        <input type="file" name="gambar" accept="image/*" required> 
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 2 (Opsional)</label>
+                        <input type="file" name="gambar_2" accept="image/*">
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 3 (Opsional)</label>
+                        <input type="file" name="gambar_3" accept="image/*">
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 4 (Opsional)</label>
+                        <input type="file" name="gambar_4" accept="image/*">
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 5 (Opsional)</label>
+                        <input type="file" name="gambar_5" accept="image/*">
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 6 (Opsional)</label>
+                        <input type="file" name="gambar_6" accept="image/*">
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 7 (Opsional)</label>
+                        <input type="file" name="gambar_7" accept="image/*">
+                    </div>
+                    <div class="upload-box">
+                        <label>Gambar 8 (Opsional)</label>
+                        <input type="file" name="gambar_8" accept="image/*">
+                    </div>
                 </div>
             </div>
 

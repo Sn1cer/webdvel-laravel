@@ -10,21 +10,18 @@ class AdminOrderController extends Controller
     // Fungsi untuk menampilkan daftar semua pesanan ke Admin
     public function index(Request $request)
     {
-        // Menambahkan with('details') untuk optimasi kecepatan pembacaan jumlah celana
         $query = Order::with('details');
 
-        // LOGIKA FILTER (misal: ?status=Diproses)
+        // LOGIKA FILTER 
         if ($request->filled('status') && $request->status != 'Semua') {
             $query->where('status', $request->status);
         }
-
-        // selesai
         $orders = $query->latest()->get();
 
         return view('admin.orders.index', compact('orders'));
     }
 
-    // Fungsi untuk mengubah status pesanan (Misal: dari Belum Bayar -> Dikirim)
+    // Fungsi untuk mengubah status pesanan
     public function updateStatus(Request $request, $id)
     {
         $order = Order::findOrFail($id);
@@ -34,7 +31,7 @@ class AdminOrderController extends Controller
             'resi' => $request->resi 
         ]);
 
-        // Pesan notifikasi sukses yang dinamis (Cerdas mengenali tipe pesanan)
+        // notif sukses
         if ($order->tipe_pesanan == 'Booking' && $request->status == 'Dikirim') {
             $pesanSukses = 'Status berhasil! Pesanan Booking telah Lunas dan selesai diambil.';
         } else {

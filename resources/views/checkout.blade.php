@@ -20,11 +20,15 @@
     .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217,119,6,0.1); background: white;}
     textarea.form-control { resize: vertical; min-height: 100px; }
 
-    /* Fitur Autocomplete Wilayah */
-    .autocomplete-items { position: absolute; border: 1px solid var(--border); border-radius: 8px; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; display: none; }
-    .autocomplete-items div { padding: 12px 15px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
-    .autocomplete-items div:hover { background-color: var(--accent); color: white; }
-    .autocomplete-active { display: block; }
+    select.form-control {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+    }
 
     /* Desain Struk (Receipt) */
     .checkout-summary {
@@ -57,9 +61,12 @@
     .struk-item .item-detail { color: #64748b; font-size: 12px; }
     .struk-item .item-price { font-weight: 800; font-size: 14px; white-space: nowrap;}
 
-    .summary-total.struk-total { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 2px dashed var(--border); font-size: 18px; font-weight: 800; color: var(--text);}
+    .summary-total.struk-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border); font-size: 18px; font-weight: 800; color: var(--text);}
     .struk-total span:first-child { text-transform: uppercase; letter-spacing: 1px; }
     
+    .ongkir-row { display: flex; justify-content: space-between; font-size: 14px; color: #475569; margin-top: 15px; }
+    .ongkir-price { font-weight: 700; color: var(--text); }
+
     .btn-pay { display: block; width: 100%; text-align: center; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; margin-top: 25px; padding: 14px; font-size: 14px; box-sizing: border-box;}
     .btn-pay:hover { filter: brightness(1.1); transform: translateY(-2px);}
 
@@ -103,6 +110,9 @@
             <form id="form-pesanan" action="{{ route('checkout.store') }}" method="POST">
                 @csrf
                 
+                <!-- Input Hidden untuk mengirim data ongkir ke controller -->
+                <input type="hidden" name="ongkir" id="hidden_ongkir" value="10000">
+
                 <div class="form-group mb-4 p-4" style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;">
                     <label class="form-label" style="font-size: 16px; margin-bottom: 12px;">Pilih Metode Pengiriman</label>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
@@ -140,10 +150,18 @@
                         <input type="text" name="alamat_jalan" class="form-control" required placeholder="Contoh: Jl. Gatot Subroto No. 123">
                     </div>
 
+                    <!-- DROPDOWN WILAYAH (DUMMY ONGKIR) -->
                     <div class="form-group">
-                        <label class="form-label">Provinsi, Kota, Kecamatan, Kode Pos</label>
-                        <input type="text" id="input_lokasi" name="wilayah" class="form-control" required placeholder="Ketik min. 3 huruf (Contoh: cimahi)" autocomplete="off">
-                        <div id="lokasi-list" class="autocomplete-items"></div>
+                        <label class="form-label">Pilih Wilayah Pengiriman</label>
+                        <select name="wilayah" id="select_wilayah" class="form-control" required onchange="hitungOngkir()">
+                            <option value="Kota Cimahi" data-tarif="10000">Kota Cimahi - Rp 10.000</option>
+                            <option value="Kota Bandung" data-tarif="15000">Kota Bandung - Rp 15.000</option>
+                            <option value="Kabupaten Bandung" data-tarif="18000">Kabupaten Bandung - Rp 18.000</option>
+                            <option value="Kabupaten Bandung Barat" data-tarif="20000">Kab. Bandung Barat - Rp 20.000</option>
+                            <option value="Jabodetabek" data-tarif="25000">Jabodetabek - Rp 25.000</option>
+                            <option value="Pulau Jawa (Lainnya)" data-tarif="35000">Pulau Jawa (Lainnya) - Rp 35.000</option>
+                            <option value="Luar Pulau Jawa" data-tarif="50000">Luar Pulau Jawa - Rp 50.000</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -173,9 +191,15 @@
                 </div>
             @endforeach
             
+            <!-- BARIS ONGKIR -->
+            <div class="ongkir-row">
+                <span>Biaya Ongkos Kirim</span>
+                <span class="ongkir-price" id="tampilan_ongkir">Rp 10.000</span>
+            </div>
+
             <div class="summary-total struk-total">
                 <span>Total Tagihan</span>
-                <span style="color: var(--accent);">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
+                <span style="color: var(--accent);" id="tampilan_total">Rp {{ number_format($totalHarga + 10000, 0, ',', '.') }}</span>
             </div>
 
             <button type="submit" form="form-pesanan" class="btn-pay">Buat Pesanan Sekarang</button>
@@ -185,82 +209,50 @@
 
 @push('scripts')
 <script>
-    // Fitur Autocomplete Wilayah
-    const dataWilayah = [
-        "Jawa Barat, Kota Cimahi, Cimahi Tengah, 40525",
-        "Jawa Barat, Kota Cimahi, Cimahi Utara, 40511",
-        "Jawa Barat, Kota Cimahi, Cimahi Selatan, 40531",
-        "Jawa Barat, Kota Bandung, Cicendo, 40171",
-        "Jawa Barat, Kota Bandung, Coblong, 40132",
-        "Jawa Barat, Kabupaten Bandung Barat, Padalarang, 40553",
-        "DKI Jakarta, Jakarta Selatan, Kebayoran Baru, 12110",
-        "Banten, Kota Tangerang, Cipondoh, 15148"
-    ];
+    // Menyimpan total harga keranjang (murni barang) dari server
+    const totalHargaBarang = {{ $totalHarga }};
 
-    const inputLokasi = document.getElementById("input_lokasi");
-    const lokasiList = document.getElementById("lokasi-list");
-
-    inputLokasi.addEventListener("input", function() {
-        let nilaiInput = this.value;
-        lokasiList.innerHTML = ""; 
+    // Fungsi untuk menghitung total tagihan saat wilayah dipilih
+    function hitungOngkir() {
+        const selectWilayah = document.getElementById('select_wilayah');
+        const isBooking = document.getElementById('tipe_booking').checked;
         
-        if (nilaiInput.length >= 3) {
-            let cocok = false;
-            
-            dataWilayah.forEach(function(lokasi) {
-                if (lokasi.toLowerCase().includes(nilaiInput.toLowerCase())) {
-                    cocok = true;
-                    let div = document.createElement("div");
-                    
-                    let regex = new RegExp(nilaiInput, "gi");
-                    div.innerHTML = lokasi.replace(regex, "<strong>$&</strong>");
-                    
-                    div.addEventListener("click", function() {
-                        inputLokasi.value = lokasi;
-                        lokasiList.classList.remove("autocomplete-active");
-                    });
-                    lokasiList.appendChild(div);
-                }
-            });
+        let tarifOngkir = 0;
 
-            if (cocok) {
-                lokasiList.classList.add("autocomplete-active");
-            } else {
-                let div = document.createElement("div");
-                div.innerHTML = "<em style='color:#64748b;'>Wilayah tidak ditemukan...</em>";
-                lokasiList.appendChild(div);
-                lokasiList.classList.add("autocomplete-active");
-            }
-        } else {
-            lokasiList.classList.remove("autocomplete-active");
+        // Jika pilih Online (bukan booking), ambil tarif dari dropdown
+        if (!isBooking) {
+            const opsiTerpilih = selectWilayah.options[selectWilayah.selectedIndex];
+            tarifOngkir = parseInt(opsiTerpilih.getAttribute('data-tarif'));
         }
-    });
+        
+        document.getElementById('hidden_ongkir').value = tarifOngkir;
 
-    document.addEventListener("click", function (e) {
-        if (e.target !== inputLokasi) {
-            lokasiList.classList.remove("autocomplete-active");
-        }
-    });
+        document.getElementById('tampilan_ongkir').innerText = "Rp " + tarifOngkir.toLocaleString('id-ID');
 
-    // --- FITUR BARU: TOGGLE FORM ALAMAT UNTUK BOOKING ---
+        const totalKeseluruhan = totalHargaBarang + tarifOngkir;
+        document.getElementById('tampilan_total').innerText = "Rp " + totalKeseluruhan.toLocaleString('id-ID');
+    }
+
+    // Fungsi untuk menyembunyikan/menampilkan form alamat
     function toggleAddressForm() {
         const isBooking = document.getElementById('tipe_booking').checked;
         const addressContainer = document.getElementById('address-form-container');
         const addressInputs = addressContainer.querySelectorAll('input, select, textarea');
 
         if (isBooking) {
-            // Sembunyikan form alamat
             addressContainer.style.display = 'none';
-            // Nonaktifkan 'required' agar form bisa di-submit
+            hitungOngkir(); 
+
             addressInputs.forEach(input => {
                 if (input.required) {
-                    input.dataset.wasRequired = 'true'; // Simpan memori bahwa form ini awalnya wajib
+                    input.dataset.wasRequired = 'true'; 
                     input.required = false;
                 }
             });
         } else {
-            // Tampilkan kembali form alamat
             addressContainer.style.display = 'block';
+            hitungOngkir(); 
+
             // Kembalikan status 'required'
             addressInputs.forEach(input => {
                 if (input.dataset.wasRequired === 'true') {
@@ -270,7 +262,8 @@
         }
     }
 
-    // Jalankan satu kali saat halaman dimuat untuk memastikan status awalnya benar
-    document.addEventListener('DOMContentLoaded', toggleAddressForm);
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleAddressForm();
+    });
 </script>
 @endpush

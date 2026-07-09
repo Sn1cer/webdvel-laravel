@@ -25,4 +25,8 @@ class Product extends Model
         'gambar_7',
         'gambar_8',
     ];
+    public function sizes()
+    {
+        return $this->hasMany(ProductSize::class);
+    }
 }

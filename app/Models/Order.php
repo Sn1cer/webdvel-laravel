@@ -11,7 +11,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'nama_depan', 'nama_belakang', 'alamat_jalan', 
-        'wilayah', 'no_hp', 'alamat_lengkap', 'total_harga', 'status', 
+        'wilayah', 'no_hp', 'alamat_lengkap', 'total_harga', 'ongkir', 'status', 
         'bukti_pembayaran', 'resi', 'tipe_pesanan', 'snap_token' // 
     ];
 

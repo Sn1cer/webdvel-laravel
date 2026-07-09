@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product; 
+use App\Models\ProductSize; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +32,6 @@ class OrderController extends Controller
     // Memproses form pesanan dan mengurangi stok
     public function store(Request $request)
     {
-        // 1. Validasi dinamis berdasarkan tipe pesanan
         $rules = [
             'nama_depan' => 'required|string|max:255',
             'nama_belakang' => 'required|string|max:255',
@@ -39,7 +39,6 @@ class OrderController extends Controller
             'tipe_pesanan' => 'required|in:Online,Booking',
         ];
 
-        // Jika Online, alamat wajib diisi
         if ($request->tipe_pesanan === 'Online') {
             $rules['alamat_jalan'] = 'required|string|max:255';
             $rules['wilayah'] = 'required|string|max:255';
@@ -57,7 +56,12 @@ class OrderController extends Controller
             $totalHarga += $cart->product->harga * $cart->jumlah;
         }
 
-        // 2. Set alamat default jika pelanggan memilih Booking
+        $ongkir = $request->has('ongkir') ? (int)$request->ongkir : 0;
+        
+        // Total Tagihan = Total belanja + Ongkir
+        $totalTagihan = $totalHarga + $ongkir;
+        // ---------------------
+
         $alamatJalan = $request->tipe_pesanan === 'Booking' ? 'Ambil di Toko' : $request->alamat_jalan;
         $wilayah = $request->tipe_pesanan === 'Booking' ? 'Ambil di Toko' : $request->wilayah;
         $alamatLengkap = $request->tipe_pesanan === 'Booking' ? 'Pesanan Booking - Ambil di Toko D Vel Jeans' : $request->alamat_lengkap;
@@ -71,12 +75,12 @@ class OrderController extends Controller
             'wilayah' => $wilayah,
             'no_hp' => $request->no_hp,
             'alamat_lengkap' => $alamatLengkap,
-            'total_harga' => $totalHarga,
+            'total_harga' => $totalTagihan, 
+            'ongkir' => $ongkir, 
             'status' => 'Belum Bayar',
-            'tipe_pesanan' => $request->tipe_pesanan // Menyimpan tipe pesanan ke database
+            'tipe_pesanan' => $request->tipe_pesanan
         ]);
 
-        // Pindahkan ke Order Detail & Kurangi Stok
         foreach ($carts as $cart) {
             OrderDetail::create([
                 'order_id' => $order->id, 
@@ -86,15 +90,22 @@ class OrderController extends Controller
                 'harga_satuan' => $cart->product->harga
             ]);
 
-            // Logika Pengurangan Stok
+            // Logika Pengurangan Stok Global
             $produk = Product::find($cart->product_id);
             if ($produk) {
                 $produk->stok -= $cart->jumlah;
                 $produk->save();
             }
+
+            $productSize = ProductSize::where('product_id', $cart->product_id)
+                            ->where('ukuran', $cart->ukuran)
+                            ->first();
+            if ($productSize) {
+                $productSize->stok -= $cart->jumlah;
+                $productSize->save();
+            }
         }
 
-        // Kosongkan keranjang
         Cart::where('user_id', Auth::id())->delete();
 
         if ($request->tipe_pesanan === 'Booking') {
@@ -118,7 +129,7 @@ class OrderController extends Controller
             $params = [
                 'transaction_details' => [
                     'order_id' => $order->id,
-                    'gross_amount' => $order->total_harga,
+                    'gross_amount' => $order->total_harga, 
                 ],
                 'customer_details' => [
                     'first_name' => $order->nama_depan,
@@ -135,7 +146,6 @@ class OrderController extends Controller
         return view('checkout-success', compact('order'));
     }
 
-    // FUNGSI INI DITAMBAHKAN KEMBALI
     public function bookingSuccess($id)
     {
         $order = Order::where('user_id', Auth::id())->findOrFail($id);
@@ -145,14 +155,12 @@ class OrderController extends Controller
     public function history()
     {
         $orders = Order::where('user_id', Auth::id())->latest()->get();
-        
         return view('order-history', compact('orders'));
     }
 
     public function callback(Request $request)
     {
         $serverKey = config('midtrans.server_key');
-        
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
         
         if ($hashed == $request->signature_key) {
@@ -169,10 +177,19 @@ class OrderController extends Controller
                     
                     if ($order->status !== 'Dibatalkan') {
                         foreach ($order->details as $detail) {
+                            // Kembalikan Stok Global
                             $produk = \App\Models\Product::find($detail->product_id);
                             if ($produk) {
                                 $produk->stok += $detail->jumlah; 
                                 $produk->save();
+                            }
+                            
+                            $productSize = ProductSize::where('product_id', $detail->product_id)
+                                            ->where('ukuran', $detail->ukuran)
+                                            ->first();
+                            if ($productSize) {
+                                $productSize->stok += $detail->jumlah;
+                                $productSize->save();
                             }
                         }
                     }

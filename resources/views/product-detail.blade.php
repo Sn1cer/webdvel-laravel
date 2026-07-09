@@ -35,7 +35,24 @@
     .size-selector { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap;}
     .size-selector input[type="radio"] { display: none; }
     .size-selector label { display: inline-block; padding: 12px 20px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: white;}
+    
+    /* Ukuran Tersedia (Aktif) */
     .size-selector input[type="radio"]:checked + label { border-color: var(--accent); background: var(--accent); color: white; }
+    
+    /* Ukuran Habis (Disabled) */
+    .size-selector input[type="radio"]:disabled + label { 
+        background: #f1f5f9; 
+        color: #94a3b8; 
+        border-color: #e2e8f0; 
+        cursor: not-allowed; 
+        text-decoration: line-through; 
+    }
+    .size-out-of-stock {
+        background: #f1f5f9 !important; 
+        color: #94a3b8 !important; 
+        border-color: #e2e8f0 !important; 
+        text-decoration: line-through !important;
+    }
 
     /* Kuantitas & Tombol Beli */
     .action-area { display: flex; gap: 15px; margin-top: 30px; }
@@ -53,7 +70,7 @@
             margin: 20px auto; 
         }
         .product-image { height: 350px; } 
-        .thumb-img { width: 65px; height: 65px; } /* Thumbnail lebih kecil di HP */
+        .thumb-img { width: 65px; height: 65px; }
         .product-title { font-size: 28px; }
         .action-area { flex-direction: column; } 
         .qty-input { width: 100%; } 
@@ -66,7 +83,6 @@
         
         <div class="product-image-box">
             @php
-                // Kumpulkan semua gambar yang terisi di database ke dalam satu Array dan hapus yang kosong
                 $allImages = array_filter([
                     $product->gambar, $product->gambar_2, $product->gambar_3, 
                     $product->gambar_4, $product->gambar_5, $product->gambar_6, 
@@ -109,12 +125,12 @@
             <div class="product-description">{{ $product->deskripsi ?? "Belum ada deskripsi untuk produk ini. Terbuat dari bahan denim premium dengan kualitas jahitan terbaik khas D'Vel Jeans." }}</div>
 
             @if($product->stok > 0)
-                <div style="margin-bottom: 20px; font-weight: 700; color: #16a34a;">
-                    ✅ Sisa Stok: {{ $product->stok }} Pcs
+                <div id="sisa-stok-label" style="margin-bottom: 20px; font-weight: 700; color: #16a34a;">
+                    ✅ Total Stok Keseluruhan: {{ $product->stok }} Pcs
                 </div>
 
                 @php
-                    $ukuranTersedia = $product->ukuran ? explode(',', $product->ukuran) : ['27', '28', '30', '32', '34'];
+                    $ukuranTersedia = $product->sizes;
                 @endphp
 
                 @auth
@@ -124,15 +140,24 @@
 
                         <label class="section-label">Pilih Ukuran (Size)</label>
                         <div class="size-selector">
-                            @foreach($ukuranTersedia as $index => $ukuran)
-                                <input type="radio" id="size{{ trim($ukuran) }}" name="ukuran" value="{{ trim($ukuran) }}" {{ $index == 0 ? 'required' : '' }}>
-                                <label for="size{{ trim($ukuran) }}">{{ trim($ukuran) }}</label>
-                            @endforeach
+                            @forelse($ukuranTersedia as $size)
+                                @if($size->stok > 0)
+                                    <!-- Ukuran Tersedia -->
+                                    <input type="radio" id="size{{ $size->ukuran }}" name="ukuran" value="{{ $size->ukuran }}" data-stok="{{ $size->stok }}" class="size-radio" required>
+                                    <label for="size{{ $size->ukuran }}">{{ $size->ukuran }}</label>
+                                @else
+                                    <!-- Ukuran Habis -->
+                                    <input type="radio" id="size{{ $size->ukuran }}" name="ukuran" value="{{ $size->ukuran }}" disabled>
+                                    <label for="size{{ $size->ukuran }}" title="Stok ukuran ini habis">{{ $size->ukuran }}</label>
+                                @endif
+                            @empty
+                                <div style="color: var(--red); font-size: 14px;">Ukuran belum dikonfigurasi oleh Admin.</div>
+                            @endforelse
                         </div>
 
                         <label class="section-label">Jumlah Barang</label>
                         <div class="action-area">
-                            <input type="number" name="jumlah" class="qty-input" value="1" min="1" max="{{ $product->stok }}" required>
+                            <input type="number" name="jumlah" id="qty-input" class="qty-input" value="1" min="1" max="{{ $product->stok }}" required>
                             <button type="submit" class="btn-add-cart">Masukkan Keranjang 🛒</button>
                         </div>
                     </form>
@@ -141,9 +166,13 @@
                 @guest
                     <label class="section-label">Pilih Ukuran (Size)</label>
                     <div class="size-selector">
-                        @foreach($ukuranTersedia as $ukuran)
-                            <label style="opacity: 0.5; cursor: not-allowed;">{{ trim($ukuran) }}</label>
-                        @endforeach
+                        @forelse($ukuranTersedia as $size)
+                            <label class="{{ $size->stok == 0 ? 'size-out-of-stock' : '' }}" style="opacity: 0.5; cursor: not-allowed;" title="{{ $size->stok == 0 ? 'Stok Habis' : 'Login untuk memilih' }}">
+                                {{ $size->ukuran }}
+                            </label>
+                        @empty
+                            <div style="color: var(--red); font-size: 14px;">Ukuran belum dikonfigurasi.</div>
+                        @endforelse
                     </div>
                     
                     <label class="section-label">Jumlah Barang</label>
@@ -171,9 +200,7 @@
 
 @push('scripts')
 <script>
-    // Fungsi untuk mengganti gambar utama di Detail Produk
     function changeMainImage(element, newSrc) {
-        // 1. Ubah gambar utama dengan efek transisi opacity
         const mainImg = document.getElementById('mainImage');
         mainImg.style.opacity = '0.7';
         
@@ -182,11 +209,29 @@
             mainImg.style.opacity = '1';
         }, 150);
 
-        // 2. Pindahkan border penanda aktif (active-thumb) ke gambar yang baru diklik
         document.querySelectorAll('.thumb-img').forEach(img => {
             img.classList.remove('active-thumb');
         });
         element.classList.add('active-thumb');
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const sizeRadios = document.querySelectorAll('.size-radio');
+        const qtyInput = document.getElementById('qty-input');
+        const sisaStokLabel = document.getElementById('sisa-stok-label');
+
+        sizeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const maxStokUkuranIni = parseInt(this.getAttribute('data-stok'));
+                
+                qtyInput.max = maxStokUkuranIni;
+                
+                if(parseInt(qtyInput.value) > maxStokUkuranIni) {
+                    qtyInput.value = maxStokUkuranIni;
+                }
+                sisaStokLabel.innerHTML = `✅ Sisa Stok Ukuran <b>${this.value}</b>: ${maxStokUkuranIni} Pcs`;
+            });
+        });
+    });
 </script>
 @endpush
