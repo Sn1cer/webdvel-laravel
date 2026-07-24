@@ -16,9 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner' => IsOwner::class,
         ]);
 
-        // Pengecualian proteksi CSRF untuk rute webhook Midtrans
+        // Pengecualian proteksi CSRF disamakan dengan routes/web.php
         $middleware->validateCsrfTokens(except: [
-            'midtrans/callback',
+            'midtrans-callback', 
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

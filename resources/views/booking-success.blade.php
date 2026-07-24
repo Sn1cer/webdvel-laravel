@@ -1,167 +1,85 @@
 @extends('layouts.app')
 
-@section('title', "Booking Berhasil - D'Vel Jeans")
+@section('title', "Kupon Booking - D'Vel Jeans")
 
 @push('styles')
 <style>
-    .success-container {
-        max-width: 600px;
-        margin: 60px auto;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        border: 1px solid var(--border);
-        overflow: hidden;
-        text-align: center;
-    }
-    .success-header {
-        background: #dcfce7;
-        padding: 40px 20px;
-        border-bottom: 1px dashed #bbf7d0;
-    }
-    .success-icon {
-        width: 80px;
-        height: 80px;
-        background: #22c55e;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 36px;
-        margin: 0 auto 20px;
-        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-    }
-    .success-title {
-        font-size: 24px;
-        font-weight: 800;
-        color: #166534;
-        margin-bottom: 10px;
-    }
-    .success-subtitle {
-        color: #15803d;
-        font-size: 15px;
-    }
-    .success-body {
-        padding: 40px;
-    }
-    .order-card {
-        background: #f8fafc;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
-        text-align: left;
-    }
-    .order-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    .order-row:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-    }
-    .row-label {
-        color: #64748b;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    .row-value {
-        color: var(--text);
-        font-size: 15px;
-        font-weight: 700;
-        text-align: right;
-    }
-    .instruction-box {
-        background: #fff8f1;
-        border-left: 4px solid var(--accent);
-        padding: 20px;
-        text-align: left;
-        border-radius: 4px;
-        margin-bottom: 30px;
-    }
-    .instruction-title {
-        font-weight: 800;
-        color: var(--accent);
-        margin-bottom: 10px;
-        font-size: 16px;
-    }
-    .instruction-list {
-        margin: 0;
-        padding-left: 20px;
-        color: #475569;
-        font-size: 14px;
-        line-height: 1.6;
-    }
-    .btn-action {
-        display: inline-block;
-        padding: 14px 30px;
-        background: var(--text);
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 700;
-        transition: 0.2s;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .btn-action:hover {
-        background: var(--accent);
-        transform: translateY(-2px);
+    /* --- CSS KHUSUS HALAMAN BOOKING --- */
+    .payment-wrapper { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 40px 20px; }
+    .payment-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; max-width: 550px; width: 100%; border: 1px solid #e2e8f0; box-sizing: border-box;}
+    
+    .icon-success { font-size: 60px; margin-bottom: 10px; }
+    .payment-card h1 { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 5px; color: #1e293b; line-height: 1.3;}
+    .order-id { color: #64748b; font-size: 14px; margin-bottom: 25px; font-weight: 600;}
+
+    /* Kotak Peringatan Waktu */
+    .alert-warning { background: #fffbeb; border: 1px dashed #d97706; padding: 20px; border-radius: 12px; margin-bottom: 25px; text-align: center; line-height: 1.5; color: #92400e; font-size: 14px;}
+    .deadline-time { font-size: 18px; font-weight: 800; color: #b45309; display: block; margin-top: 5px;}
+
+    /* --- CSS STRUK RINCIAN BARANG --- */
+    .receipt-container { background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: left; margin-top: 20px; margin-bottom: 20px;}
+    .receipt-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: #334155;}
+    .receipt-item strong { color: #1e293b; }
+    .receipt-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1; font-weight: 800; font-size: 16px; color: #1e293b;}
+    
+    .btn-home { color: #64748b; text-decoration: none; font-weight: 600; display: inline-block; font-size: 14px; transition: 0.2s; padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 8px;}
+    .btn-home:hover { color: #1e293b; background: #f1f5f9; }
+
+    @media (max-width: 768px) {
+        .payment-wrapper { padding: 20px 15px; }
+        .payment-card { padding: 30px 20px; }
+        .payment-card h1 { font-size: 24px; }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="container" style="padding: 0 20px;">
-    <div class="success-container">
-        <div class="success-header">
-            <div class="success-icon">✓</div>
-            <h1 class="success-title">Booking Berhasil!</h1>
-            <p class="success-subtitle">Stok barang Anda telah kami amankan di toko.</p>
-        </div>
-
-        <div class="success-body">
+    <div class="payment-wrapper">
+        <div class="payment-card">
             
-            <div class="order-card">
-                <div class="order-row">
-                    <span class="row-label">Nomor Pesanan</span>
-                    <span class="row-value">#{{ $order->nomor_pesanan }}</span>
-                </div>
-                <div class="order-row">
-                    <span class="row-label">Tanggal Booking</span>
-                    <span class="row-value">{{ $order->created_at->format('d M Y, H:i') }} WIB</span>
-                </div>
-                <div class="order-row">
-                    <span class="row-label">Nama Pemesan</span>
-                    <span class="row-value">{{ $order->nama_depan }} {{ $order->nama_belakang }}</span>
-                </div>
-                <div class="order-row" style="border-top: 2px dashed #cbd5e1; padding-top: 15px;">
-                    <span class="row-label" style="font-size: 16px; color: var(--text);">Total Tagihan</span>
-                    <span class="row-value" style="font-size: 20px; color: var(--accent);">Rp {{ number_format($order->total_harga, 0, ',', '.') }}</span>
-                </div>
-            </div>
+            @if($order->status == 'Dibatalkan')
+                <div class="icon-success">❌</div>
+                <h1 style="color: #ef4444;">Booking Dibatalkan</h1>
+                <div class="order-id">Order ID: #{{ $order->nomor_pesanan }}</div>
+                <p style="color: #64748b; font-size: 14px;">Pesanan ini telah dibatalkan karena melewati batas waktu pengambilan atau dibatalkan oleh Admin.</p>
+            @else
+                <div class="icon-success">🛍️</div>
+                <h1>Booking Berhasil!</h1>
+                <div class="order-id">Order ID: #{{ $order->nomor_pesanan }}</div>
+                
+                <p style="color: #475569; font-size: 14px; margin-bottom: 20px;">
+                    Silakan tunjukkan halaman ini (atau ID Pesanan) ke kasir toko fisik D'Vel Jeans untuk mengambil dan membayar pesanan Anda.
+                </p>
 
-            <div class="instruction-box">
-                <div class="instruction-title">📌 Instruksi Pengambilan:</div>
-                <ul class="instruction-list">
-                    <li>Silakan datang ke toko fisik <strong>D'Vel Jeans Cimahi</strong>.</li>
-                    <li>Tunjukkan halaman ini (atau dari Riwayat Pesanan) ke kasir kami.</li>
-                    <li>Lakukan pembayaran sebesar <strong>Rp {{ number_format($order->total_harga, 0, ',', '.') }}</strong> langsung di meja kasir (Tunai / Debit / QRIS).</li>
-                    <li>Pesanan booking akan otomatis dibatalkan jika tidak diambil dalam waktu <strong>1x24 jam</strong>.</li>
-                </ul>
-            </div>
+                <div class="alert-warning">
+                    ⚠️ Harap ambil pesanan Anda sebelum:<br>
+                    <span class="deadline-time">{{ $order->created_at->addHours(24)->format('d M Y, H:i') }} WIB</span>
+                    <span style="display: block; margin-top: 5px; font-size: 12px; color: #b45309;">Lewat dari waktu tersebut, sistem akan membatalkan pesanan secara otomatis.</span>
+                </div>
 
-            <a href="{{ route('orders.history') }}" class="btn-action">Lihat Riwayat Pesanan</a>
-            
-            <div style="margin-top: 20px;">
-                <a href="{{ url('/') }}" style="color: #64748b; text-decoration: underline; font-size: 14px;">Kembali ke Beranda</a>
-            </div>
+                <div class="receipt-container">
+                    <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">Rincian Barang yang Di-booking:</div>
+                    
+                    @foreach($order->details as $detail)
+                    <div class="receipt-item">
+                        <div>
+                            <strong>{{ $detail->product->nama_produk ?? 'Produk' }}</strong><br>
+                            Size: {{ $detail->ukuran }} &nbsp;|&nbsp; {{ $detail->jumlah }} x Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}
+                        </div>
+                        <div style="font-weight: 600;">
+                            Rp {{ number_format($detail->jumlah * $detail->harga_satuan, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    @endforeach
+                    
+                    <div class="receipt-total">
+                        <div>TOTAL BAYAR DI TOKO</div>
+                        <div style="color: #d97706;">Rp {{ number_format($order->total_harga, 0, ',', '.') }}</div>
+                    </div>
+                </div>
+            @endif
+
+            <a href="{{ route('orders.history') }}" class="btn-home">← Lihat Riwayat Pesanan</a>
         </div>
     </div>
-</div>
 @endsection

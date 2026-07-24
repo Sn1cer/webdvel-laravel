@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    // halaman Checkout
     public function create()
     {
         $carts = Cart::with('product')->where('user_id', Auth::id())->get();
@@ -29,7 +28,6 @@ class OrderController extends Controller
         return view('checkout', compact('carts', 'totalHarga'));
     }
 
-    // Memproses form pesanan dan mengurangi stok
     public function store(Request $request)
     {
         $rules = [
@@ -57,16 +55,15 @@ class OrderController extends Controller
         }
 
         $ongkir = $request->has('ongkir') ? (int)$request->ongkir : 0;
-        
-        // Total Tagihan = Total belanja + Ongkir
         $totalTagihan = $totalHarga + $ongkir;
-        // ---------------------
 
         $alamatJalan = $request->tipe_pesanan === 'Booking' ? 'Ambil di Toko' : $request->alamat_jalan;
         $wilayah = $request->tipe_pesanan === 'Booking' ? 'Ambil di Toko' : $request->wilayah;
         $alamatLengkap = $request->tipe_pesanan === 'Booking' ? 'Pesanan Booking - Ambil di Toko D Vel Jeans' : $request->alamat_lengkap;
 
-        // 3. Simpan data pesanan
+        $prefix = $request->tipe_pesanan === 'Booking' ? 'BKG-' : 'ONL-';
+        $kodePesanan = $prefix . strtoupper(uniqid());
+
         $order = Order::create([
             'user_id' => Auth::id(),
             'nama_depan' => $request->nama_depan,
@@ -78,7 +75,8 @@ class OrderController extends Controller
             'total_harga' => $totalTagihan, 
             'ongkir' => $ongkir, 
             'status' => 'Belum Bayar',
-            'tipe_pesanan' => $request->tipe_pesanan
+            'tipe_pesanan' => $request->tipe_pesanan,
+            'resi' => $kodePesanan 
         ]);
 
         foreach ($carts as $cart) {
@@ -90,7 +88,6 @@ class OrderController extends Controller
                 'harga_satuan' => $cart->product->harga
             ]);
 
-            // Logika Pengurangan Stok Global
             $produk = Product::find($cart->product_id);
             if ($produk) {
                 $produk->stok -= $cart->jumlah;
@@ -117,30 +114,44 @@ class OrderController extends Controller
 
     public function success($id)
     {
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        $order = Order::with('details.product')->where('user_id', Auth::id())->findOrFail($id);
 
-        if ($order->tipe_pesanan == 'Online' && $order->status == 'Belum Bayar' && empty($order->snap_token)) {
-            
+        if ($order->tipe_pesanan == 'Online') {
             \Midtrans\Config::$serverKey = config('midtrans.server_key');
             \Midtrans\Config::$isProduction = config('midtrans.is_production');
             \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
             \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
 
-            $params = [
-                'transaction_details' => [
-                    'order_id' => $order->id,
-                    'gross_amount' => $order->total_harga, 
-                ],
-                'customer_details' => [
-                    'first_name' => $order->nama_depan,
-                    'last_name' => $order->nama_belakang,
-                    'phone' => $order->no_hp,
-                ],
-            ];
+            if ($order->status == 'Belum Bayar' && $order->snap_token) {
+                try {
+                    $statusResponse = \Midtrans\Transaction::status($order->id);
+                    if ($statusResponse->transaction_status == 'capture' || $statusResponse->transaction_status == 'settlement') {
+                        $order->update([
+                            'status' => 'Diproses',
+                            'bukti_pembayaran' => 'midtrans_verified'
+                        ]);
+                        $order->refresh();
+                    }
+                } catch (\Exception $e) { }
+            }
 
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
-            $order->snap_token = $snapToken;
-            $order->save();
+            if ($order->status == 'Belum Bayar' && empty($order->snap_token)) {
+                $params = [
+                    'transaction_details' => [
+                        'order_id' => $order->id,
+                        'gross_amount' => $order->total_harga, 
+                    ],
+                    'customer_details' => [
+                        'first_name' => $order->nama_depan,
+                        'last_name' => $order->nama_belakang,
+                        'phone' => $order->no_hp,
+                    ],
+                ];
+
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
+                $order->snap_token = $snapToken;
+                $order->save();
+            }
         }
 
         return view('checkout-success', compact('order'));
@@ -148,12 +159,53 @@ class OrderController extends Controller
 
     public function bookingSuccess($id)
     {
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        // PENTING: Tambahkan 'with details' agar rincian barang bisa dicetak di struk booking
+        $order = Order::with('details.product')->where('user_id', Auth::id())->findOrFail($id);
         return view('booking-success', compact('order'));
     }
     
     public function history()
     {
+        // 1. AUTO CANCEL BOOKING LEWAT 24 JAM
+        $expiredBookings = Order::with('details')
+            ->where('user_id', Auth::id())
+            ->where('tipe_pesanan', 'Booking')
+            ->where('status', 'Belum Bayar')
+            ->where('created_at', '<', now()->subHours(24))
+            ->get();
+
+        foreach ($expiredBookings as $expired) {
+            foreach ($expired->details as $detail) {
+                // Kembalikan stok global
+                $produk = Product::find($detail->product_id);
+                if ($produk) { $produk->stok += $detail->jumlah; $produk->save(); }
+                // Kembalikan stok ukuran
+                $productSize = ProductSize::where('product_id', $detail->product_id)
+                                ->where('ukuran', $detail->ukuran)->first();
+                if ($productSize) { $productSize->stok += $detail->jumlah; $productSize->save(); }
+            }
+            $expired->update(['status' => 'Dibatalkan']);
+        }
+
+        // 2. CEK STATUS MIDTRANS
+        $orders = Order::where('user_id', Auth::id())->latest()->get();
+        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+
+        foreach($orders as $order) {
+            if ($order->tipe_pesanan == 'Online' && $order->status == 'Belum Bayar' && $order->snap_token) {
+                try {
+                    $statusResponse = \Midtrans\Transaction::status($order->id);
+                    if ($statusResponse->transaction_status == 'capture' || $statusResponse->transaction_status == 'settlement') {
+                        $order->update([
+                            'status' => 'Diproses',
+                            'bukti_pembayaran' => 'midtrans_verified'
+                        ]);
+                    }
+                } catch (\Exception $e) { }
+            }
+        }
+
         $orders = Order::where('user_id', Auth::id())->latest()->get();
         return view('order-history', compact('orders'));
     }
@@ -177,27 +229,18 @@ class OrderController extends Controller
                     
                     if ($order->status !== 'Dibatalkan') {
                         foreach ($order->details as $detail) {
-                            // Kembalikan Stok Global
                             $produk = \App\Models\Product::find($detail->product_id);
-                            if ($produk) {
-                                $produk->stok += $detail->jumlah; 
-                                $produk->save();
-                            }
+                            if ($produk) { $produk->stok += $detail->jumlah; $produk->save(); }
                             
                             $productSize = ProductSize::where('product_id', $detail->product_id)
-                                            ->where('ukuran', $detail->ukuran)
-                                            ->first();
-                            if ($productSize) {
-                                $productSize->stok += $detail->jumlah;
-                                $productSize->save();
-                            }
+                                            ->where('ukuran', $detail->ukuran)->first();
+                            if ($productSize) { $productSize->stok += $detail->jumlah; $productSize->save(); }
                         }
                     }
                     $order->update(['status' => 'Dibatalkan']);
                 }
             }
         }
-        
         return response()->json(['message' => 'Callback received']);
     }
 }

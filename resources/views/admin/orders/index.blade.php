@@ -117,6 +117,8 @@
                             
                             @if($order->tipe_pesanan == 'Booking')
                                 <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 8px; background: #dcfce3; padding: 4px 8px; border-radius: 4px; display: inline-block;">📍 Bayar Langsung di Toko</div>
+                            @elseif($order->bukti_pembayaran == 'midtrans_verified')
+                                <div style="font-size: 11px; font-weight: 700; color: #1d4ed8; margin-top: 8px; background: #dbeafe; padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid #bfdbfe;">✅ Lunas (Midtrans)</div>
                             @elseif($order->bukti_pembayaran)
                                 <a href="{{ asset('images/bukti/' . $order->bukti_pembayaran) }}" target="_blank" class="btn-bukti">Lihat Struk ↗</a>
                             @endif

@@ -10,9 +10,7 @@ class CartController extends Controller
 {
     public function index()
     {
-        // Ambil semua data keranjang milik user yang sedang login
         $carts = Cart::with('product')->where('user_id', Auth::id())->get();
-        
         //total harga
         $totalHarga = 0;
         foreach ($carts as $cart) {

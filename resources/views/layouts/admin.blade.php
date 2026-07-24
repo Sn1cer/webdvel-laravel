@@ -85,19 +85,19 @@
         <a href="{{ route('admin.customers.index') }}" class="nav-item {{ request()->routeIs('admin.customers.*') ? 'nav-active' : '' }}">
             👥 Data Pelanggan
         </a>
-        <a href="{{ route('admin.reports.index') }}" class="nav-item {{ request()->routeIs('admin.reports.*') ? 'nav-active' : '' }}">
-            🖨️ Laporan Penjualan
-        </a>
         
-        <div class="menu-label" style="margin-top: 20px;">Sistem</div>
+        <div class="menu-label" style="margin-top: 20px;">Sistem Khusus Owner</div>
         
         @if(auth()->check() && auth()->user()->isOwner())
-        <a href="{{ route('admin.user-management.index') }}" class="nav-item {{ request()->routeIs('admin.user-management.*') ? 'nav-active' : '' }}">
-            👑 Kelola Akun Admin
-        </a>
+            <a href="{{ route('admin.reports.index') }}" class="nav-item {{ request()->routeIs('admin.reports.*') ? 'nav-active' : '' }}">
+                🖨️ Laporan Penjualan
+            </a>
+            <a href="{{ route('admin.user-management.index') }}" class="nav-item {{ request()->routeIs('admin.user-management.*') ? 'nav-active' : '' }}">
+                👑 Kelola Akun Admin
+            </a>
         @endif
 
-        <a href="/" target="_blank" class="nav-item">
+        <a href="/" target="_blank" class="nav-item" style="margin-top: 20px;">
             🌐 Lihat Website Depan
         </a>
     </div>
