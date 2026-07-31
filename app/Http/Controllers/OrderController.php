@@ -88,12 +88,14 @@ class OrderController extends Controller
                 'harga_satuan' => $cart->product->harga
             ]);
 
+            // Potong Stok Global
             $produk = Product::find($cart->product_id);
             if ($produk) {
                 $produk->stok -= $cart->jumlah;
                 $produk->save();
             }
 
+            // Potong Stok Varian Ukuran
             $productSize = ProductSize::where('product_id', $cart->product_id)
                             ->where('ukuran', $cart->ukuran)
                             ->first();
@@ -210,37 +212,59 @@ class OrderController extends Controller
         return view('order-history', compact('orders'));
     }
 
+    /**
+     * Webhook/Callback untuk menerima update status otomatis dari Midtrans
+     */
     public function callback(Request $request)
     {
         $serverKey = config('midtrans.server_key');
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
         
+        // Validasi keaslian request dari Midtrans
         if ($hashed == $request->signature_key) {
             $order = Order::with('details')->find($request->order_id);
             
             if ($order) {
+                // Jika status berhasil dibayar
                 if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
-                    $order->update([
-                        'status' => 'Diproses',
-                        'bukti_pembayaran' => 'midtrans_verified'
-                    ]);
+                    if ($order->status == 'Belum Bayar') {
+                        $order->update([
+                            'status' => 'Diproses',
+                            'bukti_pembayaran' => 'midtrans_verified'
+                        ]);
+                    }
                 } 
+                // Jika status kedaluwarsa (expire), gagal, atau dibatalkan
                 elseif ($request->transaction_status == 'cancel' || $request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
                     
                     if ($order->status !== 'Dibatalkan') {
+                        // Loop untuk mengembalikan stok barang ke gudang
                         foreach ($order->details as $detail) {
-                            $produk = \App\Models\Product::find($detail->product_id);
-                            if ($produk) { $produk->stok += $detail->jumlah; $produk->save(); }
                             
+                            // 1. Kembalikan stok global di tabel products
+                            $produk = Product::find($detail->product_id);
+                            if ($produk) { 
+                                $produk->stok += $detail->jumlah; 
+                                $produk->save(); 
+                            }
+                            
+                            // 2. Kembalikan stok per ukuran di tabel product_sizes
                             $productSize = ProductSize::where('product_id', $detail->product_id)
                                             ->where('ukuran', $detail->ukuran)->first();
-                            if ($productSize) { $productSize->stok += $detail->jumlah; $productSize->save(); }
+                            if ($productSize) { 
+                                $productSize->stok += $detail->jumlah; 
+                                $productSize->save(); 
+                            }
                         }
+                        
+                        // Ubah status transaksi menjadi Dibatalkan
+                        $order->update(['status' => 'Dibatalkan']);
                     }
-                    $order->update(['status' => 'Dibatalkan']);
                 }
             }
+            return response()->json(['message' => 'Callback received']);
         }
-        return response()->json(['message' => 'Callback received']);
+
+        return response()->json(['message' => 'Invalid signature'], 403);
     }
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\PosController;
 use App\Models\Product;
 use App\Http\Controllers\AdminManagementController;
 use App\Http\Controllers\BannerController; 
+use App\Http\Controllers\PaymentController;
 
 // --- RUTE BERANDA ---
 Route::get('/', [FrontController::class, 'index'])->name('home');
@@ -93,7 +94,7 @@ Route::middleware('auth')->group(function () {
 }); 
 
 // --- RUTE WEBHOOK MIDTRANS ---
-// Harus di luar middleware auth agar server Midtrans bisa mengirim data kemari tanpa perlu login
-Route::post('/midtrans/callback', [OrderController::class, 'callback']);
+Route::post('/midtrans/callback', [OrderController::class, 'callback'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 require __DIR__.'/auth.php';
