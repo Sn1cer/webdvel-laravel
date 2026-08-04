@@ -5,8 +5,24 @@
     <title>Laporan Penjualan - D'Vel Jeans</title>
     <style>
         /* CSS Khusus Cetak Kertas (Tanpa warna warni berlebih) */
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; font-size: 12px; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            color: #333; 
+            font-size: 12px; 
+            margin: 0; 
+            padding: 20px; 
+            position: relative; /* Diperlukan untuk absolute positioning */
+        }
         
+        /* Waktu Cetak Kustom (Pengganti bawaan browser) */
+        .print-timestamp {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 10px;
+            color: #333;
+        }
+
         /* Kop Surat Resmi */
         .kop-surat { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
         .kop-surat h1 { font-size: 24px; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
@@ -33,9 +49,59 @@
         .ttd-box { width: 100%; margin-top: 50px; }
         .ttd-box td { border: none; text-align: center; width: 33%; padding: 0; }
         .ttd-space { height: 80px; }
+
+        /* =========================================
+           TOMBOL CETAK & PENGATURAN MEDIA PRINT
+           ========================================= */
+        .btn-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #1e293b;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: 0.2s;
+            z-index: 1000;
+        }
+        .btn-print:hover { background-color: #0f172a; transform: translateY(-2px); }
+
+        /* Menyembunyikan elemen tertentu saat proses cetak/PDF berjalan */
+        @media print {
+            .no-print { display: none !important; }
+            
+            /* MENGHILANGKAN URL DAN HALAMAN BAWAAN BROWSER */
+            @page { 
+                margin: 0; 
+            }
+            
+            /* MEMBERIKAN JARAK KERTAS MANUAL AGAR KONTEN TIDAK TERPOTONG */
+            body { 
+                padding: 1.5cm; 
+            }
+
+            /* Menyesuaikan posisi timestamp saat dicetak */
+            .print-timestamp {
+                top: 1.5cm;
+                left: 1.5cm;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Waktu yang akan muncul di pojok kiri atas (Format: 8/3/26, 11:10 PM) -->
+    <div class="print-timestamp">
+        {{ \Carbon\Carbon::now()->format('n/j/y, g:i A') }}
+    </div>
+
+    <!-- Tombol ini akan disembunyikan secara otomatis saat PDF terbuat -->
+    <button class="btn-print no-print" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
 
     <div class="kop-surat">
         <h1>D'Vel Jeans</h1>
@@ -95,5 +161,13 @@
         </tr>
     </table>
 
+    <!-- SCRIPT UNTUK OTOMATIS MEMUNCULKAN DIALOG PRINT SAAT HALAMAN DIBUKA -->
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    </script>
 </body>
 </html>

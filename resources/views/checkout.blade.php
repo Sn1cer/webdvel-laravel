@@ -69,6 +69,7 @@
 
     .btn-pay { display: block; width: 100%; text-align: center; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; margin-top: 25px; padding: 14px; font-size: 14px; box-sizing: border-box;}
     .btn-pay:hover { filter: brightness(1.1); transform: translateY(-2px);}
+    .btn-pay:disabled { background: #94a3b8; cursor: not-allowed; filter: none; transform: none;}
 
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 768px) {
@@ -181,11 +182,28 @@
             
             <h2 class="section-title struk-title">Ringkasan Pesanan</h2>
             
+            @php $stokAman = true; @endphp
             @foreach($carts as $cart)
+                @php
+                    // Pengecekan real-time ke database ukuran produk
+                    $ukuranItem = \App\Models\ProductSize::where('product_id', $cart->product_id)
+                                        ->where('ukuran', $cart->ukuran)->first();
+                    $sisaStok = $ukuranItem ? $ukuranItem->stok : 0;
+                    
+                    if($sisaStok < $cart->jumlah) {
+                        $stokAman = false;
+                    }
+                @endphp
+                
                 <div class="summary-item struk-item">
                     <div>
                         <div class="item-name">{{ $cart->product->nama_produk }}</div>
-                        <div class="item-detail">Ukuran: {{ $cart->ukuran }} | Qty: {{ $cart->jumlah }}</div>
+                        <div class="item-detail">
+                            Ukuran: {{ $cart->ukuran }} | Qty: {{ $cart->jumlah }}
+                            @if($sisaStok < $cart->jumlah)
+                                <br><span style="color: #ef4444; font-weight: 700;">(Maaf, Sisa Stok: {{ $sisaStok }})</span>
+                            @endif
+                        </div>
                     </div>
                     <div class="item-price">Rp {{ number_format($cart->product->harga * $cart->jumlah, 0, ',', '.') }}</div>
                 </div>
@@ -202,24 +220,25 @@
                 <span style="color: var(--accent);" id="tampilan_total">Rp {{ number_format($totalHarga + 10000, 0, ',', '.') }}</span>
             </div>
 
-            <button type="submit" form="form-pesanan" class="btn-pay">Buat Pesanan Sekarang</button>
+            <button type="submit" form="form-pesanan" class="btn-pay" {{ !$stokAman ? 'disabled' : '' }}>
+                {{ !$stokAman ? 'STOK TIDAK MENCUKUPI' : 'Buat Pesanan Sekarang' }}
+            </button>
         </div>
     </div>
 @endsection
 
 @push('scripts')
 <script>
-    // Menyimpan total harga keranjang (murni barang) dari server
+    // Menyimpan total harga keranjang dari server
     const totalHargaBarang = {{ $totalHarga }};
 
-    // Fungsi untuk menghitung total tagihan saat wilayah dipilih
+    //menghitung total tagihan saat wilayah dipilih
     function hitungOngkir() {
         const selectWilayah = document.getElementById('select_wilayah');
         const isBooking = document.getElementById('tipe_booking').checked;
         
         let tarifOngkir = 0;
 
-        // Jika pilih Online (bukan booking), ambil tarif dari dropdown
         if (!isBooking) {
             const opsiTerpilih = selectWilayah.options[selectWilayah.selectedIndex];
             tarifOngkir = parseInt(opsiTerpilih.getAttribute('data-tarif'));
@@ -233,7 +252,7 @@
         document.getElementById('tampilan_total').innerText = "Rp " + totalKeseluruhan.toLocaleString('id-ID');
     }
 
-    // Fungsi untuk menyembunyikan/menampilkan form alamat
+    // menyembunyikan/menampilkan form alamat
     function toggleAddressForm() {
         const isBooking = document.getElementById('tipe_booking').checked;
         const addressContainer = document.getElementById('address-form-container');
@@ -253,7 +272,6 @@
             addressContainer.style.display = 'block';
             hitungOngkir(); 
 
-            // Kembalikan status 'required'
             addressInputs.forEach(input => {
                 if (input.dataset.wasRequired === 'true') {
                     input.required = true;

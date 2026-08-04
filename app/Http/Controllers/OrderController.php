@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductSize; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -125,16 +126,36 @@ class OrderController extends Controller
             \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
 
             if ($order->status == 'Belum Bayar' && $order->snap_token) {
+                $isExpired = false;
+                
                 try {
                     $statusResponse = \Midtrans\Transaction::status($order->id);
-                    if ($statusResponse->transaction_status == 'capture' || $statusResponse->transaction_status == 'settlement') {
-                        $order->update([
-                            'status' => 'Diproses',
-                            'bukti_pembayaran' => 'midtrans_verified'
-                        ]);
+                    
+                    if (in_array($statusResponse->transaction_status, ['capture', 'settlement'])) {
+                        $order->update(['status' => 'Diproses', 'bukti_pembayaran' => 'midtrans_verified']);
                         $order->refresh();
+                    } 
+                    elseif (in_array($statusResponse->transaction_status, ['expire', 'cancel', 'deny'])) {
+                        $isExpired = true;
+                    } 
+                    elseif ($statusResponse->transaction_status == 'pending') {
+                        // Jika pending tapi Waktu Lokal sudah lewat 19 menit, paksa batal!
+                        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                            $isExpired = true;
+                        }
                     }
-                } catch (\Exception $e) { }
+                } catch (\Exception $e) { 
+                    // Jika Midtrans Error 404 & Waktu Lokal lewat 19 menit, paksa batal!
+                    if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                        $isExpired = true;
+                    }
+                }
+
+                // EKSEKUSI PEMBATALAN & RESTOCK JIKA EXPIRED
+                if ($isExpired) {
+                    $this->batalkanDanKembalikanStok($order);
+                    $order->refresh();
+                }
             }
 
             if ($order->status == 'Belum Bayar' && empty($order->snap_token)) {
@@ -147,6 +168,11 @@ class OrderController extends Controller
                         'first_name' => $order->nama_depan,
                         'last_name' => $order->nama_belakang,
                         'phone' => $order->no_hp,
+                    ],
+                    'expiry' => [
+                        'start_time' => $order->created_at->format("Y-m-d H:i:s O"),
+                        'unit' => 'minutes',
+                        'duration' => 20
                     ],
                 ];
 
@@ -161,7 +187,6 @@ class OrderController extends Controller
 
     public function bookingSuccess($id)
     {
-        // PENTING: Tambahkan 'with details' agar rincian barang bisa dicetak di struk booking
         $order = Order::with('details.product')->where('user_id', Auth::id())->findOrFail($id);
         return view('booking-success', compact('order'));
     }
@@ -173,38 +198,44 @@ class OrderController extends Controller
             ->where('user_id', Auth::id())
             ->where('tipe_pesanan', 'Booking')
             ->where('status', 'Belum Bayar')
-            ->where('created_at', '<', now()->subHours(24))
+            ->where('created_at', '<', Carbon::now()->subHours(24))
             ->get();
 
-        foreach ($expiredBookings as $expired) {
-            foreach ($expired->details as $detail) {
-                // Kembalikan stok global
-                $produk = Product::find($detail->product_id);
-                if ($produk) { $produk->stok += $detail->jumlah; $produk->save(); }
-                // Kembalikan stok ukuran
-                $productSize = ProductSize::where('product_id', $detail->product_id)
-                                ->where('ukuran', $detail->ukuran)->first();
-                if ($productSize) { $productSize->stok += $detail->jumlah; $productSize->save(); }
-            }
-            $expired->update(['status' => 'Dibatalkan']);
+        foreach ($expiredBookings as $expiredBooking) {
+            $this->batalkanDanKembalikanStok($expiredBooking);
         }
 
-        // 2. CEK STATUS MIDTRANS
+        // 2. CEK STATUS MIDTRANS UNTUK HALAMAN RIWAYAT
         $orders = Order::where('user_id', Auth::id())->latest()->get();
         \Midtrans\Config::$serverKey = config('midtrans.server_key');
         \Midtrans\Config::$isProduction = config('midtrans.is_production');
 
         foreach($orders as $order) {
             if ($order->tipe_pesanan == 'Online' && $order->status == 'Belum Bayar' && $order->snap_token) {
+                $isExpired = false;
+
                 try {
                     $statusResponse = \Midtrans\Transaction::status($order->id);
-                    if ($statusResponse->transaction_status == 'capture' || $statusResponse->transaction_status == 'settlement') {
-                        $order->update([
-                            'status' => 'Diproses',
-                            'bukti_pembayaran' => 'midtrans_verified'
-                        ]);
+                    if (in_array($statusResponse->transaction_status, ['capture', 'settlement'])) {
+                        $order->update(['status' => 'Diproses', 'bukti_pembayaran' => 'midtrans_verified']);
+                    } 
+                    elseif (in_array($statusResponse->transaction_status, ['expire', 'cancel', 'deny'])) {
+                        $isExpired = true;
+                    } 
+                    elseif ($statusResponse->transaction_status == 'pending') {
+                        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                            $isExpired = true;
+                        }
                     }
-                } catch (\Exception $e) { }
+                } catch (\Exception $e) { 
+                    if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                        $isExpired = true;
+                    }
+                }
+
+                if ($isExpired) {
+                    $this->batalkanDanKembalikanStok($order);
+                }
             }
         }
 
@@ -212,59 +243,51 @@ class OrderController extends Controller
         return view('order-history', compact('orders'));
     }
 
-    /**
-     * Webhook/Callback untuk menerima update status otomatis dari Midtrans
-     */
     public function callback(Request $request)
     {
         $serverKey = config('midtrans.server_key');
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
         
-        // Validasi keaslian request dari Midtrans
         if ($hashed == $request->signature_key) {
             $order = Order::with('details')->find($request->order_id);
             
             if ($order) {
-                // Jika status berhasil dibayar
                 if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
                     if ($order->status == 'Belum Bayar') {
-                        $order->update([
-                            'status' => 'Diproses',
-                            'bukti_pembayaran' => 'midtrans_verified'
-                        ]);
+                        $order->update(['status' => 'Diproses', 'bukti_pembayaran' => 'midtrans_verified']);
                     }
                 } 
-                // Jika status kedaluwarsa (expire), gagal, atau dibatalkan
-                elseif ($request->transaction_status == 'cancel' || $request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
-                    
-                    if ($order->status !== 'Dibatalkan') {
-                        // Loop untuk mengembalikan stok barang ke gudang
-                        foreach ($order->details as $detail) {
-                            
-                            // 1. Kembalikan stok global di tabel products
-                            $produk = Product::find($detail->product_id);
-                            if ($produk) { 
-                                $produk->stok += $detail->jumlah; 
-                                $produk->save(); 
-                            }
-                            
-                            // 2. Kembalikan stok per ukuran di tabel product_sizes
-                            $productSize = ProductSize::where('product_id', $detail->product_id)
-                                            ->where('ukuran', $detail->ukuran)->first();
-                            if ($productSize) { 
-                                $productSize->stok += $detail->jumlah; 
-                                $productSize->save(); 
-                            }
-                        }
-                        
-                        // Ubah status transaksi menjadi Dibatalkan
-                        $order->update(['status' => 'Dibatalkan']);
-                    }
+                elseif (in_array($request->transaction_status, ['cancel', 'deny', 'expire'])) {
+                    $this->batalkanDanKembalikanStok($order);
                 }
             }
             return response()->json(['message' => 'Callback received']);
         }
 
         return response()->json(['message' => 'Invalid signature'], 403);
+    }
+
+    /**
+     * Fungsi Helper untuk membatalkan pesanan dan mengembalikan stok
+     */
+    private function batalkanDanKembalikanStok($order)
+    {
+        if ($order->status != 'Dibatalkan') {
+            foreach ($order->details as $detail) {
+                $produk = Product::find($detail->product_id);
+                if ($produk) { 
+                    $produk->stok += $detail->jumlah; 
+                    $produk->save(); 
+                }
+                
+                $productSize = ProductSize::where('product_id', $detail->product_id)
+                                ->where('ukuran', $detail->ukuran)->first();
+                if ($productSize) { 
+                    $productSize->stok += $detail->jumlah; 
+                    $productSize->save(); 
+                }
+            }
+            $order->update(['status' => 'Dibatalkan']);
+        }
     }
 }

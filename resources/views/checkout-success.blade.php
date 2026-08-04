@@ -108,11 +108,24 @@
                 </div>
 
                 <div style="margin-bottom: 15px; color: #475569; font-size: 14px; line-height: 1.5;">
-                    Silakan klik tombol di bawah ini untuk memilih metode pembayaran (Transfer Bank, QRIS, GoPay, dll).
+                    Silakan klik tombol di bawah ini untuk memilih metode pembayaran (Transfer Bank, QRIS, GoPay, dll) sebelum batas waktu pembayaran (20 menit) habis.
                 </div>
                 
                 <button id="pay-button" class="btn-pay">💳 Pilih Metode Pembayaran</button>
                 <a href="{{ route('orders.history') }}" class="btn-home">← Nanti saja, lihat Daftar Pesanan</a>
+
+            <!-- TAMBAHKAN LOGIKA JIKA PESANAN KEDALUWARSA/BATAL -->
+            @elseif($order->status == 'Dibatalkan')
+                <div class="icon-success" style="color: #ef4444;">⏳</div>
+                <h1 style="color: #ef4444;">Pembayaran Kedaluwarsa</h1>
+                <div class="order-id" style="margin-bottom: 10px;">Order ID: #{{ $order->nomor_pesanan }}</div>
+                
+                <div style="font-size: 15px; color: #64748b; margin-bottom: 25px; line-height: 1.6; background: #fee2e2; padding: 15px; border-radius: 8px;">
+                    Maaf, batas waktu pembayaran Anda telah habis atau pesanan dibatalkan. <br>
+                    <strong>Stok barang telah otomatis dikembalikan ke sistem.</strong>
+                </div>
+                
+                <a href="{{ route('orders.history') }}" class="btn-home" style="margin-top: 0; font-size: 15px; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 8px;">← Kembali ke Daftar Pesanan</a>
 
             @else
                 <div class="icon-success" style="color: #10b981;">✅</div>
@@ -133,7 +146,7 @@
                     @foreach($order->details as $detail)
                     <div class="receipt-item">
                         <div>
-                            <strong>{{ $detail->product->nama_produk ?? 'Produk' }}</strong><br>
+                            <strong>{{ $detail->product->nama_produk ?? 'Produk Dihapus' }}</strong><br>
                             Size: {{ $detail->ukuran }} &nbsp;|&nbsp; {{ $detail->jumlah }} x Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}
                         </div>
                         <div style="font-weight: 600;">
@@ -179,6 +192,9 @@
                     },
                     onError: function(result){
                         alert("Maaf, terjadi kesalahan pada pembayaran Anda.");
+                    },
+                    onClose: function(){
+                        window.location.reload();
                     }
                 });
             };

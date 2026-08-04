@@ -168,7 +168,8 @@
                             @endif
                         </td>
                         <td style="width: 180px;">
-                            <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" style="display: flex; flex-direction: column; gap: 6px;">
+                            <!-- Penambahan validasi "onsubmit" pada Form -->
+                            <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" style="display: flex; flex-direction: column; gap: 6px;" onsubmit="return validasiResi(this, '{{ $order->tipe_pesanan }}')">
                                 @csrf @method('PATCH')
                                 
                                 <select name="status" class="status-select">
@@ -247,6 +248,21 @@
         }
         function tutupModal(id) {
             document.getElementById('modal-' + id).style.display = 'none';
+        }
+        
+        // Fungsi Validasi Resi
+        function validasiResi(formElement, tipePesanan) {
+            if (tipePesanan === 'Online') {
+                var status = formElement.querySelector('select[name="status"]').value;
+                var resi = formElement.querySelector('input[name="resi"]').value.trim();
+                
+                if (status === 'Dikirim' && resi === '') {
+                    alert('⚠️ Peringatan: Anda wajib mengisi Nomor Resi Pengiriman sebelum mengubah status menjadi "Dikirim"!');
+                    formElement.querySelector('input[name="resi"]').focus();
+                    return false; 
+                }
+            }
+            return true;
         }
     </script>
 @endpush

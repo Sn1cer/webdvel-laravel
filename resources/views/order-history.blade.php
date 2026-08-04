@@ -31,6 +31,7 @@
         .badge-belum-bayar { background: #fef3c7; color: #b45309; }
         .badge-diproses { background: #dbeafe; color: #1d4ed8; }
         .badge-dikirim { background: #dcfce3; color: #15803d; }
+        .badge-dibatalkan { background: #fee2e2; color: #b91c1c; } /* Penambahan CSS Dibatalkan */
 
         .btn-action { background: #1e293b; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: 0.2s;}
         .btn-action:hover { background: #334155; }
@@ -78,6 +79,8 @@
                             $badgeClass = 'badge-diproses';
                         } elseif($order->status == 'Dikirim') {
                             $badgeClass = 'badge-dikirim';
+                        } elseif($order->status == 'Dibatalkan') {
+                            $badgeClass = 'badge-dibatalkan';
                         }
                     @endphp
                     
@@ -92,7 +95,12 @@
                         <br>
                     @endif
 
-                    @if($order->status == 'Belum Bayar' && empty($order->bukti_pembayaran))
+                    <!-- JIKA PESANAN DIBATALKAN/EXPIRED -->
+                    @if($order->status == 'Dibatalkan')
+                        <span style="display: block; font-size: 12px; color: #b91c1c; font-weight: 700; margin-top: 10px;">Batas Waktu Habis / Dibatalkan</span>
+                    
+                    <!-- JIKA BELUM BAYAR -->
+                    @elseif($order->status == 'Belum Bayar' && empty($order->bukti_pembayaran))
                         
                         @if($order->tipe_pesanan == 'Booking')
                             <div style="text-align: right;">
@@ -100,9 +108,11 @@
                                 <a href="{{ route('booking.success', $order->id) }}" class="btn-action" style="background: #0f172a;">Lihat Kupon Booking</a>
                             </div>
                         @else
-                            <a href="{{ route('checkout.success', $order->id) }}" class="btn-upload-susulan">Upload Bukti Bayar</a>
+                            <!-- Tombol disesuaikan dari Upload Bukti Bayar menjadi Lanjutkan Pembayaran -->
+                            <a href="{{ route('checkout.success', $order->id) }}" class="btn-upload-susulan">Lanjutkan Pembayaran</a>
                         @endif
 
+                    <!-- JIKA SUDAH DIPROSES/DIKIRIM -->
                     @else
                         
                         @if($order->tipe_pesanan == 'Booking')
