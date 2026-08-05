@@ -11,7 +11,6 @@ class AdminOrderController extends Controller
 {
     public function index(Request $request)
     {
-        // Panggil relasi details.product untuk mencegah N+1 Query
         $query = Order::with('details.product')->latest();
 
         // Filter berdasarkan Status Pesanan
@@ -37,7 +36,6 @@ class AdminOrderController extends Controller
 
         $updateData = ['status' => $newStatus];
 
-        // Jika form mengirim nomor resi yang tidak kosong
         if ($request->has('resi') && $request->resi != null) {
             $updateData['resi'] = $request->resi;
         }
@@ -45,7 +43,6 @@ class AdminOrderController extends Controller
         // LOGIKA PENGEMBALIAN STOK (JIKA ADMIN MEMBATALKAN PESANAN MANUAL)
         if ($newStatus == 'Dibatalkan' && $oldStatus != 'Dibatalkan') {
             foreach ($order->details as $detail) {
-                // 1. Kembalikan stok global produk
                 $produk = Product::find($detail->product_id);
                 if ($produk) {
                     $produk->stok += $detail->jumlah;
@@ -62,7 +59,6 @@ class AdminOrderController extends Controller
             }
         }
 
-        // Simpan perubahan ke database
         $order->update($updateData);
 
         return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui!');

@@ -6,7 +6,7 @@
     <title>@yield('title', "D'Vel Jeans - Official Store")</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    
+    <link rel="icon" href="{{ asset('Dvel/logo.png') }}" type="image/png">
     <style>
         /* --- CSS GLOBAL & NAVBAR --- */
         :root { --accent: #d97706; --text: #1e293b; --bg: #f8fafc; }

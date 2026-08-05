@@ -18,7 +18,6 @@ class CustomerController extends Controller
             // Hitung total
             $customer->total_orders = Order::where('user_id', $customer->id)->count();
             
-            // Hitung total uang 
             $customer->total_spent = Order::where('user_id', $customer->id)
                                           ->whereIn('status', ['Diproses', 'Dikirim'])
                                           ->sum('total_harga');

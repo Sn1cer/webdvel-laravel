@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <link rel="icon" href="{{ asset('Dvel/logo.png') }}" type="image/png">
     <style>
         :root { --accent: #d97706; --text: #1e293b; --bg: #f8fafc; --border: #e2e8f0; --sidebar: #ffffff; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; }

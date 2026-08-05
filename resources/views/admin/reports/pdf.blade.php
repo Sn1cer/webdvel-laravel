@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Laporan Penjualan - D'Vel Jeans</title>
+    <link rel="icon" href="{{ asset('Dvel/logo.png') }}" type="image/png">
     <style>
         /* CSS Khusus Cetak Kertas (Tanpa warna warni berlebih) */
         body { 

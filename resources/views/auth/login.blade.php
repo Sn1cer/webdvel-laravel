@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - D'Vel Jeans</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ asset('Dvel/logo.png') }}" type="image/png">
     <style>
         /* --- CSS IDENTITAS WARNA BRAND D'VEL --- */
         :root {
