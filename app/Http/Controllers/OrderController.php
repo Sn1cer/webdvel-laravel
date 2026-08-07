@@ -89,7 +89,7 @@ class OrderController extends Controller
                 'harga_satuan' => $cart->product->harga
             ]);
 
-            // Potong Stok Global
+            // Stok Global
             $produk = Product::find($cart->product_id);
             if ($produk) {
                 $produk->stok -= $cart->jumlah;
@@ -139,19 +139,16 @@ class OrderController extends Controller
                         $isExpired = true;
                     } 
                     elseif ($statusResponse->transaction_status == 'pending') {
-                        // Jika pending tapi Waktu Lokal sudah lewat 19 menit, paksa batal!
                         if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
                             $isExpired = true;
                         }
                     }
                 } catch (\Exception $e) { 
-                    // Jika Midtrans Error 404 & Waktu Lokal lewat 19 menit, paksa batal!
                     if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
                         $isExpired = true;
                     }
                 }
 
-                // EKSEKUSI PEMBATALAN & RESTOCK JIKA EXPIRED
                 if ($isExpired) {
                     $this->batalkanDanKembalikanStok($order);
                     $order->refresh();
@@ -193,7 +190,7 @@ class OrderController extends Controller
     
     public function history()
     {
-        // 1. AUTO CANCEL BOOKING LEWAT 24 JAM
+        // auto cancel booking
         $expiredBookings = Order::with('details')
             ->where('user_id', Auth::id())
             ->where('tipe_pesanan', 'Booking')
@@ -205,7 +202,7 @@ class OrderController extends Controller
             $this->batalkanDanKembalikanStok($expiredBooking);
         }
 
-        // 2. CEK STATUS MIDTRANS UNTUK HALAMAN RIWAYAT
+        // cek midtrans
         $orders = Order::where('user_id', Auth::id())->latest()->get();
         \Midtrans\Config::$serverKey = config('midtrans.server_key');
         \Midtrans\Config::$isProduction = config('midtrans.is_production');

@@ -12,7 +12,12 @@
         :root { --accent: #d97706; --text: #1e293b; --bg: #f8fafc; --border: #e2e8f0; --sidebar: #ffffff; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; }
         
-        .sidebar { width: 250px; background: var(--sidebar); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; padding-top: 25px; display: flex; flex-direction: column; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar { width: 250px; background: var(--sidebar); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; padding-top: 25px; padding-bottom: 25px; display: flex; flex-direction: column; z-index: 1000; transition: transform 0.3s ease; overflow-y: auto; }
+        
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        
         .sidebar-header { padding: 0 25px 20px; border-bottom: 1px solid var(--border); margin-bottom: 25px; }
         .admin-label { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; }
         .brand { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); margin: 0; }
@@ -28,7 +33,6 @@
         .hamburger-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text); padding: 0; }
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 999; }
 
-        /* --- TAMBAHAN UNTUK RESPONSIVE (HP & TABLET) --- */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.active { transform: translateX(0); }
@@ -37,14 +41,12 @@
             .sidebar-overlay.active { display: block; }
             .content-area { padding: 15px; }
             
-            /* Agar elemen tidak terpotong di HP */
             .welcome-banner { flex-direction: column; text-align: center; gap: 15px; }
             .stats-grid { grid-template-columns: 1fr; }
             .grid-container-responsive { grid-template-columns: 1fr !important; }
             .table-responsive { overflow-x: auto; }
         }
         
-        /* SEMBUNYIKAN SIDEBAR SAAT PRINT STRUK */
         @media print {
             .sidebar, .topbar { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; }

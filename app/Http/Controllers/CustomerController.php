@@ -10,12 +10,10 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        // Ambil akun user, KECUALI akun Admin
         $customers = User::where('email', '!=', 'admin@dveljeans.com')->latest()->get();
 
-        // Hitung statistik belanja untuk masing-masing pelanggan
+        // Hitung statistik 
         foreach($customers as $customer) {
-            // Hitung total
             $customer->total_orders = Order::where('user_id', $customer->id)->count();
             
             $customer->total_spent = Order::where('user_id', $customer->id)

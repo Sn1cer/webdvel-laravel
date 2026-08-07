@@ -76,10 +76,8 @@ class PosController extends Controller
 
             DB::commit();
 
-            // PENTING: Load relasi detail & produk agar datanya bisa dicetak di struk
             $order->load('details.product');
 
-            // Mengembalikan pesan sukses, sekaligus mengirimkan data $order ke dalam session 'print_order'
             return redirect()->back()
                 ->with('success', 'Pembayaran Offline Berhasil! Stok varian ukuran telah otomatis dikurangi.')
                 ->with('print_order', $order);

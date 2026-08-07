@@ -11,7 +11,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Data Statistik Atas
+        // Data Statistik 
         $pendapatanBulanIni = Order::whereIn('status', ['Diproses', 'Dikirim'])
                                     ->whereMonth('created_at', Carbon::now()->month)
                                     ->whereYear('created_at', Carbon::now()->year)
@@ -25,22 +25,21 @@ class DashboardController extends Controller
         $aktivitasTerkini = Order::latest()->take(5)->get();
         $stokMenipis = Product::where('stok', '<', 5)->get();
 
-        //Data Grafik Pendapatan 7 Hari Terakhir
         $chartDates = [];
         $chartRevenues = [];
 
-        // Looping mundur dari 6 hari lalu sampai hari ini (0)
+        // Looping mundur
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            // Simpan format tanggal (Contoh: "29 Mar")
+            // format
             $chartDates[] = $date->translatedFormat('d M'); 
 
-            // Hitung pendapatan khusus di tanggal tersebut
+            // Hitung 
             $revenue = Order::whereIn('status', ['Diproses', 'Dikirim'])
                             ->whereDate('created_at', $date->toDateString())
                             ->sum('total_harga');
             
-            // Simpan hasil pendapatannya
+            // Simpan 
             $chartRevenues[] = $revenue;
         }
 
