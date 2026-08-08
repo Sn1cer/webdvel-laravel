@@ -1,10 +1,10 @@
 @extends('layouts.admin')
 
-@section('title', "Manajemen Produk & Stok - Admin D'Vel Jeans")
+@section('title', "Manajemen Produk - Admin D'Vel Jeans")
 
 @section('topbar_title')
     <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
-        <span>📦 Manajemen Produk & Stok Gudang</span>
+        <span>📦 Manajemen Produk </span>
         <div style="display: flex; gap: 10px;">
             <a href="{{ route('admin.stocks.pdf') }}" class="btn-print" target="_blank">🖨️ Cetak Laporan Stok</a>
             <a href="{{ route('products.create') }}" class="btn-add">+ Tambah Produk</a>

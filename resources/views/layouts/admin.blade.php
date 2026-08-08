@@ -76,7 +76,7 @@
             🛒 Kasir Offline (POS)
         </a>
         <a href="{{ route('products.index') }}" class="nav-item {{ request()->routeIs('products.*') ? 'nav-active' : '' }}">
-            📦 Manajemen Produk & Stok
+            📦 Manajemen Produk 
         </a>
         <a href="{{ route('admin.orders.index') }}" class="nav-item {{ request()->routeIs('admin.orders.*') ? 'nav-active' : '' }}">
             🚚 Pesanan Masuk
