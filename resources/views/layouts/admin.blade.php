@@ -12,7 +12,7 @@
         :root { --accent: #d97706; --text: #1e293b; --bg: #f8fafc; --border: #e2e8f0; --sidebar: #ffffff; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; }
         
-        .sidebar { width: 250px; background: var(--sidebar); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; padding-top: 25px; padding-bottom: 25px; display: flex; flex-direction: column; z-index: 1000; transition: transform 0.3s ease; overflow-y: auto; }
+        .sidebar { box-sizing: border-box; width: 250px; background: var(--sidebar); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; padding-top: 25px; padding-bottom: 40px; display: flex; flex-direction: column; z-index: 1000; transition: transform 0.3s ease; overflow-y: auto; }
         
         .sidebar::-webkit-scrollbar { width: 6px; }
         .sidebar::-webkit-scrollbar-track { background: transparent; }

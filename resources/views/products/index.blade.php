@@ -31,21 +31,37 @@
         .td-title { font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 4px; white-space: nowrap; }
         .td-sub { font-size: 12px; color: #64748b; min-width: 150px; }
         
-        /* CSS Khusus Badge Varian Ukuran */
         .variant-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; max-width: 250px;}
         .badge-size { font-size: 10px; font-weight: 700; background: #f1f5f9; color: #475569; padding: 3px 6px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: nowrap;}
         .badge-size.empty { background: #fee2e2; color: #ef4444; border-color: #fca5a5; text-decoration: line-through;}
         
-        .action-buttons { display: flex; gap: 8px; }
-        .btn-edit { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 700; transition: 0.2s;}
+        /* Modifikasi Layout Tombol Aksi */
+        .action-buttons { display: flex; flex-direction: column; gap: 6px; align-items: center;}
+        
+        .btn-edit { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 700; transition: 0.2s; width: 100%; text-align: center; box-sizing: border-box;}
         .btn-edit:hover { background: #dcfce3; }
-        .btn-delete { background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;}
+        .btn-delete { background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box;}
         .btn-delete:hover { background: #fef2f2; }
         
+        /* CSS Tombol & Modal Sesuaikan Stok */
+        .btn-adjust { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box;}
+        .btn-adjust:hover { background: #dbeafe; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-header { font-size: 16px; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; line-height: 1;}
+        .close-btn:hover { color: #ef4444; }
+        .size-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .size-input { width: 80px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-weight: 600; outline: none;}
+        .size-input:focus { border-color: var(--accent); }
+        .btn-save-modal { background: var(--text); color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: 700; margin-top: 15px; cursor: pointer; transition: 0.2s;}
+        .btn-save-modal:hover { background: var(--accent); }
+
         .stock-warning { color: #ef4444; font-size: 11px; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 5px; display: inline-block;}
         .alert-success { background: #dcfce3; color: #166534; padding: 15px; border-radius: 8px; font-weight: 600; border: 1px solid #bbf7d0; margin-bottom: 20px;}
+        .alert-error { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; font-weight: 600; border: 1px solid #fca5a5; margin-bottom: 20px;}
 
-        /* --- RESPONSIVE KHUSUS TABEL --- */
         @media (max-width: 768px) {
             .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             table { min-width: 800px; }
@@ -56,6 +72,9 @@
 
     @if(session('success'))
         <div class="alert-success">✅ {{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert-error">❌ {{ session('error') }}</div>
     @endif
 
     <div class="table-wrapper">
@@ -107,14 +126,53 @@
                             </div>
                         </td>
                         <td style="text-align: center;">
-                            <div class="action-buttons" style="justify-content: center;">
-                                <a href="{{ route('products.edit', $product->id) }}" class="btn-edit">✏️ Edit / Update Stok</a>
+                            <div class="action-buttons">
+                                <!-- Tombol Buka Modal -->
+                                <button type="button" class="btn-adjust" onclick="document.getElementById('modal-{{ $product->id }}').style.display='flex'">⚖️ Sesuaikan Stok</button>
                                 
-                                <form action="{{ route('products.destroy', $product->id) }}" method="POST" onsubmit="return confirm('Hapus produk ini secara permanen?');">
+                                <a href="{{ route('products.edit', $product->id) }}" class="btn-edit">✏️ Edit Produk</a>
+                                
+                                <form action="{{ route('products.destroy', $product->id) }}" method="POST" onsubmit="return confirm('Hapus produk ini secara permanen?');" style="width: 100%;">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn-delete">🗑️ Hapus</button>
                                 </form>
                             </div>
+
+                            <!-- POP-UP MODAL PENYESUAIAN STOK (Berada di dalam Loop) -->
+                            <div class="modal-overlay" id="modal-{{ $product->id }}">
+                                <div class="modal-box">
+                                    <div class="modal-header">
+                                        <div style="text-align: left;">
+                                            <div style="font-size: 14px;">⚖️ Penyesuaian Stok</div>
+                                            <div style="font-size: 11px; color: var(--accent); font-weight: 600;">{{ Str::limit($product->nama_produk, 30) }}</div>
+                                        </div>
+                                        <button type="button" class="close-btn" onclick="document.getElementById('modal-{{ $product->id }}').style.display='none'">&times;</button>
+                                    </div>
+                                    
+                                    <form action="{{ route('products.adjust_stock', $product->id) }}" method="POST">
+                                        @csrf
+                                        <p style="font-size: 12px; color: #64748b; margin-bottom: 15px; text-align: left; line-height: 1.5;">
+                                            Ketik angka minus (contoh: <strong>-1</strong>) untuk mengurangi stok dari Shopee. Ketik angka biasa (contoh: <strong>5</strong>) untuk menambah barang masuk.
+                                        </p>
+                                        
+                                        <div style="max-height: 250px; overflow-y: auto; margin-bottom: 10px; padding-right: 5px;">
+                                            @foreach($product->sizes as $size)
+                                                <div class="size-row">
+                                                    <div style="font-weight: 700; font-size: 13px; color: var(--text);">
+                                                        Ukuran {{ $size->ukuran }} 
+                                                        <span style="font-size: 11px; color: #94a3b8; font-weight: normal; margin-left: 5px;">(Sisa: {{ $size->stok }})</span>
+                                                    </div>
+                                                    <input type="number" name="adjustments[{{ $size->id }}]" class="size-input" placeholder="+ / -">
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        <button type="submit" class="btn-save-modal">Simpan Penyesuaian</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <!-- Akhir Modal -->
+
                         </td>
                     </tr>
                 @empty

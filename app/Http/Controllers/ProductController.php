@@ -194,4 +194,46 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')->with('success', 'Data Celana Jeans berhasil dihapus dari sistem!');
     }
+
+    // --- FITUR SINKRONISASI STOK SHOPEE (KHUSUS VARIAN UKURAN) ---
+    public function adjustStock(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        
+        // Mengambil array input adjustment dari modal
+        $adjustments = $request->input('adjustments', []);
+        $ada_perubahan = false;
+
+        foreach ($adjustments as $size_id => $qty) {
+            // Jika form inputnya diisi (tidak kosong dan bukan 0)
+            if ($qty && $qty != 0) {
+                // Cari data ukuran spesifik di tabel product_sizes
+                $size = \App\Models\ProductSize::where('product_id', $product->id)->where('id', $size_id)->first();
+                
+                if ($size) {
+                    $stok_baru = $size->stok + $qty;
+
+                    // Proteksi agar stok varian ukuran tidak minus
+                    if ($stok_baru < 0) {
+                        return redirect()->back()->with('error', 'Gagal! Sisa stok untuk Ukuran ' . $size->ukuran . ' tidak mencukupi untuk dikurangi.');
+                    }
+
+                    $size->stok = $stok_baru;
+                    $size->save();
+                    $ada_perubahan = true;
+                }
+            }
+        }
+
+        if ($ada_perubahan) {
+            // Kalkulasi ulang Total Stok Global di tabel Products
+            $product->stok = $product->sizes()->sum('stok');
+            $product->save();
+
+            return redirect()->back()->with('success', 'Stok varian ukuran berhasil disesuaikan!');
+        }
+
+        // Jika form kosong tapi tombol simpan ditekan
+        return redirect()->back();
+    }
 }

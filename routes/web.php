@@ -59,6 +59,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/stok', [StockController::class, 'index'])->name('admin.stocks.index');
     Route::patch('/admin/stok/{id}', [StockController::class, 'addStock'])->name('admin.stocks.add');
     Route::get('/admin/stok/cetak', [StockController::class, 'exportPdf'])->name('admin.stocks.pdf');
+    Route::post('/admin/products/{id}/adjust-stock', [App\Http\Controllers\ProductController::class, 'adjustStock'])->name('products.adjust_stock');
 
     // Data Pelanggan (CRM)
     Route::get('/admin/pelanggan', [CustomerController::class, 'index'])->name('admin.customers.index');
