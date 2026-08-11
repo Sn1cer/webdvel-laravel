@@ -7,6 +7,8 @@
         <span>📦 Manajemen Produk </span>
         <div style="display: flex; gap: 10px;">
             <a href="{{ route('admin.stocks.pdf') }}" class="btn-print" target="_blank">🖨️ Cetak Laporan Stok</a>
+            <!-- Tombol Baru untuk Cetak Log Shopee -->
+            <a href="{{ route('admin.stocks.shopee_pdf') }}" class="btn-print" target="_blank" style="color: #ef4444; border-color: #fca5a5;">🖨️ Cetak Log Shopee</a>
             <a href="{{ route('products.create') }}" class="btn-add">+ Tambah Produk</a>
         </div>
     </div>
@@ -35,6 +37,14 @@
         .badge-size { font-size: 10px; font-weight: 700; background: #f1f5f9; color: #475569; padding: 3px 6px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: nowrap;}
         .badge-size.empty { background: #fee2e2; color: #ef4444; border-color: #fca5a5; text-decoration: line-through;}
         
+        /* Area Log Shopee */
+        .log-area { max-height: 90px; overflow-y: auto; font-size: 11px; padding-right: 5px; min-width: 180px; }
+        .log-area::-webkit-scrollbar { width: 4px; }
+        .log-area::-webkit-scrollbar-track { background: #f1f5f9; }
+        .log-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        .log-item { border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px; margin-bottom: 5px; }
+        .log-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
         /* Modifikasi Layout Tombol Aksi */
         .action-buttons { display: flex; flex-direction: column; gap: 6px; align-items: center;}
         
@@ -64,7 +74,7 @@
 
         @media (max-width: 768px) {
             .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            table { min-width: 800px; }
+            table { min-width: 900px; }
             .btn-add, .btn-print { padding: 6px 10px; font-size: 11px; }
             .variant-badges { max-width: 100%; }
         }
@@ -85,6 +95,7 @@
                     <th>Detail Produk</th>
                     <th>Harga Jual</th>
                     <th>Sisa Stok (Gudang & Varian)</th>
+                    <th>Log Aktivitas Shopee</th>
                     <th width="140" style="text-align: center;">Aksi</th>
                 </tr>
             </thead>
@@ -125,6 +136,26 @@
                                 @endforelse
                             </div>
                         </td>
+                        
+                        <!-- Sel Log Aktivitas Shopee -->
+                        <td>
+                            <div class="log-area">
+                                @if(isset($shopeeLogs) && $shopeeLogs->has($product->id))
+                                    @foreach($shopeeLogs[$product->id] as $log)
+                                        <div class="log-item">
+                                            <span style="font-weight: 700; color: #ef4444;">
+                                                {{ $log->jumlah_penyesuaian }} (Size: {{ $log->ukuran }})
+                                            </span>
+                                            <br>
+                                            <span style="color: #64748b;">{{ \Carbon\Carbon::parse($log->created_at)->format('d M Y, H:i') }}</span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <span style="color: #94a3b8; font-style: italic;">Belum ada riwayat.</span>
+                                @endif
+                            </div>
+                        </td>
+
                         <td style="text-align: center;">
                             <div class="action-buttons">
                                 <!-- Tombol Buka Modal -->
@@ -177,7 +208,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 50px; color: #64748b;">
+                        <td colspan="6" style="text-align: center; padding: 50px; color: #64748b;">
                             <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
                             <div style="font-weight: 700; font-size: 16px; color: var(--text);">Gudang Masih Kosong</div>
                             Belum ada produk yang didaftarkan.

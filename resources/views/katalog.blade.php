@@ -19,10 +19,13 @@
     .card-body { padding: 24px; }
     .title { font-size: 18px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
     .price { color: var(--accent); font-size: 20px; font-weight: 800; margin-bottom: 16px; }
-    .btn-buy { display: block; width: 100%; text-align: center; background: var(--text); color: white; padding: 12px; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.2s; }
+    
+    .btn-buy { display: flex; justify-content: center; align-items: center; width: 100%; text-align: center; background: var(--text); color: white; padding: 12px; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.2s; box-sizing: border-box; }
     .btn-buy:hover { background: var(--accent); }
-    .btn-outline { display: flex; justify-content: center; align-items: center; border: 2px solid var(--border); color: var(--text); text-decoration: none; border-radius: 8px; font-weight: 700; transition: 0.2s; }
-    .btn-outline:hover { border-color: var(--text); }
+    
+    /* Perbaikan Tombol Detail menjadi warna Accent (Oranye) */
+    .btn-detail { display: flex; justify-content: center; align-items: center; background: var(--accent); color: white; text-decoration: none; border-radius: 8px; font-weight: 700; transition: 0.2s; box-sizing: border-box; }
+    .btn-detail:hover { background: #b45309; /* Warna oranye sedikit lebih gelap saat hover */ }
 
     /* Desain Tombol Pagination Laravel */
     .pagination-wrapper { margin-top: 50px; display: flex; justify-content: center; }
@@ -52,7 +55,7 @@
                         <div class="price">Rp {{ number_format($product->harga, 0, ',', '.') }}</div>
                         
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
-                            <a href="{{ route('produk.detail', $product->id) }}" class="btn-outline" style="flex: 1; padding: 10px;">Detail</a>
+                            <a href="{{ route('produk.detail', $product->id) }}" class="btn-detail" style="flex: 1; padding: 12px;">Detail</a>
                             
                             @guest
                                 <a href="{{ route('login') }}" class="btn-buy" style="flex: 1; padding: 12px; margin: 0;" onclick="alert('Silakan masuk (login) ke akun Anda terlebih dahulu untuk mulai berbelanja!')">🛒 +Cart</a>

@@ -49,7 +49,22 @@
     .card-body { padding: 24px; }
     .title { font-size: 18px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
     .price { color: var(--accent); font-size: 20px; font-weight: 800; margin-bottom: 16px; }
-    .btn-buy { display: block; width: 100%; text-align: center; background: var(--text); color: white; padding: 12px; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.2s; }
+    
+    /* Tombol Beli yang Diperbarui */
+    .btn-buy { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        width: 100%; 
+        background: var(--text); 
+        color: white; 
+        padding: 12px 0; 
+        text-decoration: none; 
+        border-radius: 8px; 
+        font-weight: 600; 
+        transition: background 0.2s; 
+        box-sizing: border-box; 
+    }
     .btn-buy:hover { background: var(--accent); }
 
     /* RESPONSIVE KHUSUS BERANDA */

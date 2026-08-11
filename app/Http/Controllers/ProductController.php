@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; 
 
 class ProductController extends Controller
 {
@@ -12,9 +13,18 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all(); 
+        $products = Product::with('sizes')->get(); 
         
-        return view('products.index', compact('products'));
+        // Mengambil log Shopee yang HANYA berupa pengurangan (minus)
+        $shopeeLogs = DB::table('shopee_logs')
+            ->join('product_sizes', 'shopee_logs.product_size_id', '=', 'product_sizes.id')
+            ->select('shopee_logs.*', 'product_sizes.ukuran')
+            ->where('shopee_logs.jumlah_penyesuaian', '<', 0) // Filter khusus pengurangan
+            ->orderBy('shopee_logs.created_at', 'desc')
+            ->get()
+            ->groupBy('product_id'); 
+        
+        return view('products.index', compact('products', 'shopeeLogs'));
     }
 
     /**
@@ -30,7 +40,6 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi Data (stok dan ukuran dihapus dari sini karena akan dihitung otomatis)
         $request->validate([
             'nama_produk' => 'required|string|max:255',
             'deskripsi'   => 'nullable|string',
@@ -45,7 +54,6 @@ class ProductController extends Controller
             'gambar_8'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // 2. Hitung Otomatis Total Stok & Ukuran dari input array 'sizes'
         $totalStok = 0;
         $ukuranTersedia = [];
         if ($request->has('sizes')) {
@@ -57,12 +65,10 @@ class ProductController extends Controller
             }
         }
 
-        // 3. Simpan Data Produk
         $product = new Product();
         $product->nama_produk = $request->nama_produk;
         $product->deskripsi = $request->deskripsi;
         $product->harga = $request->harga;
-        // Simpan data otomatis ke kolom lama agar sistem lain tidak error
         $product->stok = $totalStok; 
         $product->ukuran = implode(', ', $ukuranTersedia); 
 
@@ -78,7 +84,6 @@ class ProductController extends Controller
         }
         $product->save(); 
 
-        // 4. Simpan Rincian Stok per Ukuran ke Tabel Baru (product_sizes)
         if ($request->has('sizes')) {
             foreach ($request->sizes as $ukuran => $stok) {
                 if ($stok > 0) { 
@@ -116,7 +121,6 @@ class ProductController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // 1. Validasi Data
         $request->validate([
             'nama_produk' => 'required|string|max:255',
             'deskripsi'   => 'nullable|string',
@@ -133,7 +137,6 @@ class ProductController extends Controller
 
         $product = Product::findOrFail($id);
 
-        // 2. Hitung Otomatis Total Stok & Ukuran
         $totalStok = 0;
         $ukuranTersedia = [];
         if ($request->has('sizes')) {
@@ -145,7 +148,6 @@ class ProductController extends Controller
             }
         }
 
-        // 3. Update Data Produk
         $product->nama_produk = $request->nama_produk;
         $product->deskripsi = $request->deskripsi;
         $product->harga = $request->harga;
@@ -165,9 +167,7 @@ class ProductController extends Controller
         }
         $product->save();
 
-        // 4. Update Rincian Stok per Ukuran di Tabel Baru
         if ($request->has('sizes')) {
-            // Hapus data ukuran lama, ganti dengan yang baru
             $product->sizes()->delete(); 
 
             foreach ($request->sizes as $ukuran => $stok) {
@@ -200,40 +200,48 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         
-        // Mengambil array input adjustment dari modal
         $adjustments = $request->input('adjustments', []);
         $ada_perubahan = false;
 
         foreach ($adjustments as $size_id => $qty) {
-            // Jika form inputnya diisi (tidak kosong dan bukan 0)
             if ($qty && $qty != 0) {
-                // Cari data ukuran spesifik di tabel product_sizes
                 $size = \App\Models\ProductSize::where('product_id', $product->id)->where('id', $size_id)->first();
                 
                 if ($size) {
                     $stok_baru = $size->stok + $qty;
 
-                    // Proteksi agar stok varian ukuran tidak minus
                     if ($stok_baru < 0) {
                         return redirect()->back()->with('error', 'Gagal! Sisa stok untuk Ukuran ' . $size->ukuran . ' tidak mencukupi untuk dikurangi.');
                     }
 
                     $size->stok = $stok_baru;
                     $size->save();
+
+                    // --- PENCATATAN LOG KE DATABASE (HANYA UNTUK PENGURANGAN / MINUS) ---
+                    if ($qty < 0) {
+                        DB::table('shopee_logs')->insert([
+                            'product_id'         => $product->id,
+                            'product_size_id'    => $size->id,
+                            'jumlah_penyesuaian' => (int)$qty,
+                            'keterangan'         => 'Terjual di Shopee',
+                            'created_at'         => now(),
+                            'updated_at'         => now(),
+                        ]);
+                    }
+                    // ----------------------------------
+
                     $ada_perubahan = true;
                 }
             }
         }
 
         if ($ada_perubahan) {
-            // Kalkulasi ulang Total Stok Global di tabel Products
             $product->stok = $product->sizes()->sum('stok');
             $product->save();
 
             return redirect()->back()->with('success', 'Stok varian ukuran berhasil disesuaikan!');
         }
 
-        // Jika form kosong tapi tombol simpan ditekan
         return redirect()->back();
     }
 }
