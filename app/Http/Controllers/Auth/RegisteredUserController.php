@@ -46,9 +46,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // --- OTAK PENYELEKSI SAAT BARU DAFTAR ---
+        // --- penyeleksi ---
         if ($user->email === 'admin@dveljeans.com') {
-            // Jika yang daftar adalah Admin, lempar ke Panel Admin
             return redirect()->route('products.index');
         }
         

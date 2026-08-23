@@ -13,7 +13,6 @@ class AdminOrderController extends Controller
     {
         $query = Order::with('details.product')->latest();
 
-        // Filter berdasarkan Status Pesanan
         if ($request->has('status') && $request->status != 'Semua') {
             $query->where('status', $request->status);
         }

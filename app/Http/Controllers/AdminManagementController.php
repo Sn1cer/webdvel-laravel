@@ -17,7 +17,7 @@ class AdminManagementController extends Controller
         return view('admin.user-management.index', compact('users'));
     }
 
-    // Fungsi baru daftar Admin
+    // daftar admin
     public function store(Request $request)
     {
         $request->validate([

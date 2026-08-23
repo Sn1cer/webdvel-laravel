@@ -4,7 +4,6 @@
 
 @push('styles')
 <style>
-    /* --- CSS KHUSUS HALAMAN PEMBAYARAN --- */
     .payment-wrapper { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 40px 20px; }
     
     .payment-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; max-width: 550px; width: 100%; border: 1px solid #e2e8f0; box-sizing: border-box;}
@@ -13,12 +12,10 @@
     .payment-card h1 { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 5px; color: #1e293b; line-height: 1.3;}
     .order-id { color: #64748b; font-size: 14px; margin-bottom: 25px; font-weight: 600;}
     
-    /* Kotak Tagihan */
     .bill-box { background: #fffbeb; border: 1px dashed #d97706; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
     .bill-box p { margin: 0 0 5px 0; color: #78350f; font-size: 14px; font-weight: 600;}
     .total-amount { font-size: 32px; font-weight: 800; color: #d97706; }
 
-    /* Tombol Bayar Midtrans */
     .btn-pay { background: #1e293b; color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(30, 41, 59, 0.2);}
     .btn-pay:hover { background: #d97706; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);}
 
@@ -26,7 +23,6 @@
     .btn-home { color: #64748b; text-decoration: none; font-weight: 600; display: inline-block; margin-top: 25px; font-size: 14px; transition: 0.2s;}
     .btn-home:hover { color: #d97706; }
 
-    /* --- CSS STRUK JIKA LUNAS --- */
     .receipt-container { background: white; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: left; margin-top: 20px;}
     .receipt-header { text-align: center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px; margin-bottom: 15px; }
     .receipt-logo { font-family: 'DM Serif Display', serif; font-size: 24px; color: #1e293b; letter-spacing: 1px; }
@@ -39,7 +35,6 @@
     .btn-print { background: #10b981; color: white; padding: 12px; border-radius: 8px; border: none; font-weight: 700; width: 100%; margin-top: 15px; cursor: pointer; text-transform: uppercase; font-size: 14px;}
     .btn-print:hover { background: #059669; }
 
-    /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 768px) {
         .payment-wrapper { padding: 20px 15px; }
         .payment-card { padding: 30px 20px; }
@@ -47,7 +42,6 @@
         .total-amount { font-size: 28px; }
     }
 
-    /* --- PENGATURAN PDF/PRINT (DIPERBARUI) --- */
     @media print {
         @page {
             margin: 1cm; 
@@ -108,13 +102,12 @@
                 </div>
 
                 <div style="margin-bottom: 15px; color: #475569; font-size: 14px; line-height: 1.5;">
-                    Silakan klik tombol di bawah ini untuk memilih metode pembayaran (Transfer Bank, QRIS, GoPay, dll) sebelum batas waktu pembayaran (20 menit) habis.
+                    Silakan klik tombol di bawah ini untuk memilih metode pembayaran (Transfer Bank, QRIS, GoPay, dll) sebelum batas waktu pembayaran (24 jam) habis.
                 </div>
                 
                 <button id="pay-button" class="btn-pay">💳 Pilih Metode Pembayaran</button>
                 <a href="{{ route('orders.history') }}" class="btn-home">← Nanti saja, lihat Daftar Pesanan</a>
 
-            <!-- TAMBAHKAN LOGIKA JIKA PESANAN KEDALUWARSA/BATAL -->
             @elseif($order->status == 'Dibatalkan')
                 <div class="icon-success" style="color: #ef4444;">⏳</div>
                 <h1 style="color: #ef4444;">Pembayaran Kedaluwarsa</h1>

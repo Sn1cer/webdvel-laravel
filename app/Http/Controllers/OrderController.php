@@ -89,14 +89,12 @@ class OrderController extends Controller
                 'harga_satuan' => $cart->product->harga
             ]);
 
-            // Stok Global
             $produk = Product::find($cart->product_id);
             if ($produk) {
                 $produk->stok -= $cart->jumlah;
                 $produk->save();
             }
 
-            // Potong Stok Varian Ukuran
             $productSize = ProductSize::where('product_id', $cart->product_id)
                             ->where('ukuran', $cart->ukuran)
                             ->first();
@@ -129,7 +127,7 @@ class OrderController extends Controller
                 $isExpired = false;
                 
                 try {
-                    $statusResponse = \Midtrans\Transaction::status($order->id);
+                    $statusResponse = \Midtrans\Transaction::status($order->id . '-' . $order->created_at->timestamp);
                     
                     if (in_array($statusResponse->transaction_status, ['capture', 'settlement'])) {
                         $order->update(['status' => 'Diproses', 'bukti_pembayaran' => 'midtrans_verified']);
@@ -139,12 +137,12 @@ class OrderController extends Controller
                         $isExpired = true;
                     } 
                     elseif ($statusResponse->transaction_status == 'pending') {
-                        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addHours(24))) {
                             $isExpired = true;
                         }
                     }
                 } catch (\Exception $e) { 
-                    if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                    if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addHours(24))) {
                         $isExpired = true;
                     }
                 }
@@ -158,7 +156,7 @@ class OrderController extends Controller
             if ($order->status == 'Belum Bayar' && empty($order->snap_token)) {
                 $params = [
                     'transaction_details' => [
-                        'order_id' => $order->id,
+                        'order_id' => $order->id . '-' . $order->created_at->timestamp,
                         'gross_amount' => $order->total_harga, 
                     ],
                     'customer_details' => [
@@ -168,8 +166,8 @@ class OrderController extends Controller
                     ],
                     'expiry' => [
                         'start_time' => $order->created_at->format("Y-m-d H:i:s O"),
-                        'unit' => 'minutes',
-                        'duration' => 20
+                        'unit' => 'hours',
+                        'duration' => 24
                     ],
                 ];
 
@@ -190,7 +188,6 @@ class OrderController extends Controller
     
     public function history()
     {
-        // auto cancel booking
         $expiredBookings = Order::with('details')
             ->where('user_id', Auth::id())
             ->where('tipe_pesanan', 'Booking')
@@ -202,7 +199,6 @@ class OrderController extends Controller
             $this->batalkanDanKembalikanStok($expiredBooking);
         }
 
-        // cek midtrans
         $orders = Order::where('user_id', Auth::id())->latest()->get();
         \Midtrans\Config::$serverKey = config('midtrans.server_key');
         \Midtrans\Config::$isProduction = config('midtrans.is_production');
@@ -212,7 +208,8 @@ class OrderController extends Controller
                 $isExpired = false;
 
                 try {
-                    $statusResponse = \Midtrans\Transaction::status($order->id);
+                    $statusResponse = \Midtrans\Transaction::status($order->id . '-' . $order->created_at->timestamp);
+                    
                     if (in_array($statusResponse->transaction_status, ['capture', 'settlement'])) {
                         $order->update(['status' => 'Diproses', 'bukti_pembayaran' => 'midtrans_verified']);
                     } 
@@ -220,12 +217,12 @@ class OrderController extends Controller
                         $isExpired = true;
                     } 
                     elseif ($statusResponse->transaction_status == 'pending') {
-                        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addHours(24))) {
                             $isExpired = true;
                         }
                     }
                 } catch (\Exception $e) { 
-                    if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addMinutes(19))) {
+                    if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($order->created_at)->addHours(24))) {
                         $isExpired = true;
                     }
                 }
@@ -246,7 +243,8 @@ class OrderController extends Controller
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
         
         if ($hashed == $request->signature_key) {
-            $order = Order::with('details')->find($request->order_id);
+            $realOrderId = explode('-', $request->order_id)[0];
+            $order = Order::with('details')->find($realOrderId);
             
             if ($order) {
                 if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
@@ -264,9 +262,6 @@ class OrderController extends Controller
         return response()->json(['message' => 'Invalid signature'], 403);
     }
 
-    /**
-     * Fungsi Helper untuk membatalkan pesanan dan mengembalikan stok
-     */
     private function batalkanDanKembalikanStok($order)
     {
         if ($order->status != 'Dibatalkan') {

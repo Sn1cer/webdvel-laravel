@@ -28,13 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // --- OTAK PENYELEKSI (LOGIKA BERDASARKAN ROLE) ---
+        // --- penyeleksi ---
         if ($request->user()->isAdmin() || $request->user()->isOwner()) {
-            // Jika ya, lempar ke halaman Panel Admin
             return redirect()->route('admin.dashboard');
         }
 
-        // Jika Pelanggan biasa, lempar ke halaman utama
         return redirect('/');
     }
 
