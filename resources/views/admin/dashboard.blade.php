@@ -18,6 +18,11 @@
         .welcome-text p { margin: 0; color: #cbd5e1; font-size: 15px;}
         .btn-quick { background: var(--accent); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; transition: 0.2s;}
         .btn-quick:hover { filter: brightness(1.1); }
+
+        /* Badge Source Pesanan (Shopee / POS) */
+        .source-badge { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 5px; display: inline-block; vertical-align: middle; }
+        .source-shopee { background: #ffedd5; color: #ea580c; border: 1px solid #fed7aa; }
+        .source-pos { background: #e0e7ff; color: #2563eb; border: 1px solid #bfdbfe; }
     </style>
 
     <div class="welcome-banner">
@@ -79,7 +84,7 @@
                 <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 400px;">
                     <thead>
                         <tr style="border-bottom: 2px solid var(--border);">
-                            <th style="padding-bottom: 10px; font-size: 12px; color: #64748b;">Pelanggan</th>
+                            <th style="padding-bottom: 10px; font-size: 12px; color: #64748b;">Pelanggan / Resi</th>
                             <th style="padding-bottom: 10px; font-size: 12px; color: #64748b;">Total Tagihan</th>
                             <th style="padding-bottom: 10px; font-size: 12px; color: #64748b;">Status</th>
                         </tr>
@@ -88,8 +93,18 @@
                         @forelse($aktivitasTerkini as $order)
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 15px 0;">
-                                    <div style="font-weight: 700; font-size: 14px;">{{ $order->nama_depan }}</div>
-                                    <div style="font-size: 12px; color: #64748b;">{{ \Carbon\Carbon::parse($order->created_at)->locale('id')->diffForHumans() }}</div>
+                                    <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">
+                                        {{ $order->nama_depan }} {{ $order->nama_belakang }}
+                                        
+                                        <!-- Logika Pembeda Shopee & POS -->
+                                        @if(str_contains($order->tipe_pesanan, 'Shopee'))
+                                            <span class="source-badge source-shopee">SHOPEE</span>
+                                        @elseif(str_contains($order->tipe_pesanan, 'POS Offline'))
+                                            <span class="source-badge source-pos">KASIR POS</span>
+                                        @endif
+                                    </div>
+                                    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 2px; font-family: monospace;">{{ $order->resi }}</div>
+                                    <div style="font-size: 11px; color: #64748b;">{{ \Carbon\Carbon::parse($order->created_at)->locale('id')->diffForHumans() }}</div>
                                 </td>
                                 <td style="font-weight: 700; color: var(--accent); font-size: 14px;">Rp {{ number_format($order->total_harga, 0, ',', '.') }}</td>
                                 <td>

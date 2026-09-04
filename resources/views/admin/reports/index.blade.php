@@ -36,6 +36,12 @@
         .detail-list li { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dashed #e2e8f0; white-space: nowrap;}
         .detail-list li:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 
+        /* Badge Tambahan untuk Sumber Transaksi */
+        .badge-tipe-booking { background: #e2e8f0; color: #334155; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-block;}
+        .badge-tipe-online { background: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-block;}
+        .badge-tipe-shopee { background: #ffedd5; color: #ea580c; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-block;}
+        .badge-tipe-pos { background: #fef08a; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-block;}
+
         /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 768px) {
             .filter-actions { flex-direction: column; align-items: stretch; }
@@ -55,9 +61,10 @@
                 <label>Sumber Transaksi</label>
                 <select name="tipe_pesanan">
                     <option value="Semua">Semua Sumber</option>
-                    <option value="Online" {{ request('tipe_pesanan') == 'Online' ? 'selected' : '' }}>Online (Ekspedisi)</option>
-                    <option value="Booking" {{ request('tipe_pesanan') == 'Booking' ? 'selected' : '' }}>Booking (Ambil Toko)</option>
-                    <option value="POS Offline" {{ request('tipe_pesanan') == 'POS Offline' ? 'selected' : '' }}>POS Kasir Offline</option>
+                    <option value="Online" {{ request('tipe_pesanan') == 'Online' ? 'selected' : '' }}>🌐 Online (Web)</option>
+                    <option value="Booking" {{ request('tipe_pesanan') == 'Booking' ? 'selected' : '' }}>🛍️ Booking (Ambil Toko)</option>
+                    <option value="POS Offline" {{ request('tipe_pesanan') == 'POS Offline' ? 'selected' : '' }}>🛒 POS Kasir Offline</option>
+                    <option value="Shopee" {{ request('tipe_pesanan') == 'Shopee' ? 'selected' : '' }}>🟠 Shopee</option>
                 </select>
             </div>
             <div class="form-group">
@@ -68,14 +75,6 @@
                     <option value="Diproses" {{ request('status') == 'Diproses' ? 'selected' : '' }}>Diproses</option>
                     <option value="Dikirim" {{ request('status') == 'Dikirim' ? 'selected' : '' }}>Selesai / Dikirim</option>
                     <option value="Dibatalkan" {{ request('status') == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Metode Pembayaran</label>
-                <select name="pembayaran">
-                    <option value="Semua">Semua Metode</option>
-                    <option value="Midtrans" {{ request('pembayaran') == 'Midtrans' ? 'selected' : '' }}>Midtrans Otomatis</option>
-                    <option value="Tunai" {{ request('pembayaran') == 'Tunai' ? 'selected' : '' }}>Tunai / Toko</option>
                 </select>
             </div>
             <div class="form-group">
@@ -119,7 +118,8 @@
                             <span style="font-weight: 600;">{{ $order->created_at->format('H:i') }} WIB</span>
                         </td>
                         <td>
-                            <div style="font-weight: 800; color: var(--accent);">#{{ $order->nomor_pesanan ?? $order->resi }}</div>
+                            <!-- MENAMPILKAN RESI ASLI TANPA HARDCODE '#' -->
+                            <div style="font-weight: 800; color: var(--accent);">{{ $order->resi }}</div>
                             <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">{{ $order->nama_depan }} {{ $order->nama_belakang }}</div>
                         </td>
                         <td>
@@ -140,13 +140,28 @@
                             <span style="background: {{ $badgeColor }}; color: {{ $textColor }}; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase;">
                                 {{ $order->status }}
                             </span>
-                            <div style="font-size: 11px; font-weight: 600; margin-top: 6px; color: #64748b;">
-                                {{ $order->tipe_pesanan }}
-                                @if($order->bukti_pembayaran == 'midtrans_verified')
-                                    <span style="color: #1d4ed8;">(Midtrans)</span>
+                            
+                            <div style="margin-top: 8px;">
+                                @if($order->tipe_pesanan == 'Booking')
+                                    <span class="badge-tipe-booking">BOOKING</span>
+                                @elseif(str_contains($order->tipe_pesanan, 'POS Offline'))
+                                    <span class="badge-tipe-pos">KASIR POS</span>
+                                @elseif($order->tipe_pesanan == 'Shopee')
+                                    <span class="badge-tipe-shopee">SHOPEE</span>
                                 @else
-                                    (Tunai)
+                                    <span class="badge-tipe-online">ONLINE</span>
                                 @endif
+                                
+                                <!-- Keterangan Metode Pembayaran -->
+                                <span style="font-size: 11px; font-weight: 600; margin-left: 4px;">
+                                    @if($order->bukti_pembayaran == 'midtrans_verified')
+                                        <span style="color: #1d4ed8;">(Midtrans)</span>
+                                    @elseif(str_contains($order->tipe_pesanan, 'QRIS'))
+                                        <span style="color: #059669;">(QRIS)</span>
+                                    @elseif(str_contains($order->tipe_pesanan, 'Tunai'))
+                                        <span style="color: #b45309;">(Tunai)</span>
+                                    @endif
+                                </span>
                             </div>
                         </td>
                         <td style="text-align: right; font-weight: 700; font-size: 15px;">

@@ -18,6 +18,7 @@ class PosController extends Controller
         return view('admin.pos.index', compact('products'));
     }
 
+    // --- SINKRONISASI KASIR POS (BYPASS FILLABLE UNTUK RESI #POS) ---
     public function checkout(Request $request)
     {
         $cart = json_decode($request->cart_data, true);
@@ -33,28 +34,32 @@ class PosController extends Controller
                 $totalHarga += ($item['price'] * $item['qty']);
             }
 
-            $order = Order::create([
-                'user_id' => Auth::id() ?? 1,
-                'nama_depan' => 'Pelanggan',
-                'nama_belakang' => 'Toko (Offline)',
-                'no_hp' => '-',
-                'wilayah' => 'Pembelian Langsung di Toko Fisik',
-                'alamat_jalan' => '-',
-                'total_harga' => $totalHarga,
-                'ongkir' => 0, 
-                'status' => 'Dikirim', 
-                'tipe_pesanan' => 'POS Offline', 
-                'resi' => 'POS-OFFLINE-' . strtoupper(uniqid())
-            ]);
+            $metode_pembayaran = $request->metode_pembayaran ?? 'Tunai';
+            $tipe_pesanan_text = 'POS Offline (' . $metode_pembayaran . ')';
+
+            // BYPASS METODE CREATE MENJADI INSTANSIASI AGAR RESI PASTI TERSIMPAN
+            $order = new Order();
+            $order->user_id = Auth::id() ?? 1;
+            $order->nama_depan = 'Pelanggan Toko';
+            $order->nama_belakang = '(Offline)';
+            $order->no_hp = '-';
+            $order->wilayah = 'Pembelian Langsung di Toko Fisik';
+            $order->alamat_jalan = '-';
+            $order->total_harga = $totalHarga;
+            $order->ongkir = 0; 
+            $order->status = 'Dikirim'; 
+            $order->tipe_pesanan = $tipe_pesanan_text; 
+            $order->resi = '#POS-' . strtoupper(uniqid()); // PASTI #POS
+            $order->save();
 
             foreach ($cart as $item) {
-                OrderDetail::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['id'],
-                    'jumlah' => $item['qty'],
-                    'harga_satuan' => $item['price'], 
-                    'ukuran' => $item['ukuran'] ?? '-' 
-                ]);
+                $detail = new OrderDetail();
+                $detail->order_id = $order->id;
+                $detail->product_id = $item['id'];
+                $detail->jumlah = $item['qty'];
+                $detail->harga_satuan = $item['price'];
+                $detail->ukuran = $item['ukuran'] ?? '-';
+                $detail->save();
 
                 $product = Product::find($item['id']);
                 if ($product) {
@@ -64,9 +69,9 @@ class PosController extends Controller
 
                 if (isset($item['ukuran'])) {
                     $productSize = ProductSize::where('product_id', $item['id'])
-                                        ->where('ukuran', $item['ukuran'])
-                                        ->first();
-                                        
+                                                ->where('ukuran', $item['ukuran'])
+                                                ->first();
+                                                
                     if ($productSize) {
                         $productSize->stok -= $item['qty'];
                         $productSize->save();
@@ -74,17 +79,17 @@ class PosController extends Controller
                 }
             }
 
-            DB::commit();
+            DB::commit(); 
 
             $order->load('details.product');
 
             return redirect()->back()
-                ->with('success', 'Pembayaran Offline Berhasil! Stok varian ukuran telah otomatis dikurangi.')
+                ->with('success', 'Transaksi Kasir Berhasil! Resi #POS telah otomatis masuk ke Laporan dan Dashboard.')
                 ->with('print_order', $order);
             
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses transaksi: ' . $e->getMessage());
         }
     }
 }

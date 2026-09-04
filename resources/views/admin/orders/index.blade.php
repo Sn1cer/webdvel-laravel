@@ -52,6 +52,8 @@
         
         .badge-tipe-booking { background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}
         .badge-tipe-online { background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}
+        /* BADGE BARU UNTUK SHOPEE */
+        .badge-tipe-shopee { background: #ffedd5; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}
 
         /* MODAL POP-UP */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -94,6 +96,8 @@
                 <option value="Online" {{ $currentTipe == 'Online' ? 'selected' : '' }}>🌐 Pesanan Online</option>
                 <option value="Booking" {{ $currentTipe == 'Booking' ? 'selected' : '' }}>🛍️ Booking (Ambil Toko)</option>
                 <option value="POS Offline" {{ $currentTipe == 'POS Offline' ? 'selected' : '' }}>🛒 POS Kasir</option>
+                <!-- TAMBAHAN FILTER SHOPEE JIKA PERLU -->
+                <option value="Shopee" {{ $currentTipe == 'Shopee' ? 'selected' : '' }}>🟠 Shopee</option>
             </select>
         </form>
     </div>
@@ -114,11 +118,15 @@
                     <tr>
                         <td>
                             <div class="td-title">
-                                #{{ $order->nomor_pesanan ?? $order->resi }}
+                                <!-- MENGGUNAKAN $order->resi MURNI (TANPA # HARCODED KARENA SUDAH ADA DI DB) -->
+                                {{ $order->resi }}
+                                
                                 @if($order->tipe_pesanan == 'Booking')
                                     <span class="badge-tipe-booking">BOOKING</span>
-                                @elseif($order->tipe_pesanan == 'POS Offline')
+                                @elseif(str_contains($order->tipe_pesanan, 'POS Offline'))
                                     <span class="badge-tipe-booking" style="background: #fef08a; color: #92400e;">POS</span>
+                                @elseif($order->tipe_pesanan == 'Shopee')
+                                    <span class="badge-tipe-shopee">SHOPEE</span>
                                 @else
                                     <span class="badge-tipe-online">ONLINE</span>
                                 @endif
@@ -137,7 +145,7 @@
                                 <ul style="list-style-type: none; padding-left: 0; margin-bottom: 0;">
                                     @foreach($order->details as $item)
                                         <li class="mb-1">
-                                            <strong>{{ $item->jumlah }}x</strong> {{ $item->product->nama_produk }} <br>
+                                            <strong>{{ $item->jumlah }}x</strong> {{ $item->product->nama_produk ?? 'Barang Dihapus' }} <br>
                                             <span class="text-muted" style="font-size: 0.85em;">Size: {{ $item->ukuran }}</span>
                                         </li>
                                     @endforeach
@@ -146,6 +154,8 @@
                             
                             @if($order->tipe_pesanan == 'Booking')
                                 <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 8px; background: #dcfce3; padding: 4px 8px; border-radius: 4px; display: inline-block;">📍 Bayar Langsung di Toko</div>
+                            @elseif(str_contains($order->tipe_pesanan, 'POS Offline'))
+                                <div style="font-size: 11px; font-weight: 700; color: #92400e; margin-top: 8px; background: #fef08a; padding: 4px 8px; border-radius: 4px; display: inline-block;">💵 Dibayar di Kasir</div>
                             @elseif($order->bukti_pembayaran == 'midtrans_verified')
                                 <div style="font-size: 11px; font-weight: 700; color: #1d4ed8; margin-top: 8px; background: #dbeafe; padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid #bfdbfe;">✅ Lunas (Midtrans)</div>
                             @elseif($order->bukti_pembayaran)
@@ -163,8 +173,10 @@
                             <span class="badge {{ $bc }}">
                                 {{ $order->status == 'Dikirim' && $order->tipe_pesanan == 'Booking' ? 'Selesai Diambil' : $order->status }}
                             </span>
-                            @if($order->resi && $order->resi !== 'Diambil di Toko' && !str_starts_with($order->resi, 'POS-') && !str_starts_with($order->resi, 'ONL-') && !str_starts_with($order->resi, 'BKG-'))
-                                <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 5px;">Resi: {{ $order->resi }}</div>
+                            
+                            <!-- Hanya tampilkan ini jika resinya bukan format standar POS/SHP (yaitu resi kurir JNE/JNT) -->
+                            @if($order->resi && !str_starts_with($order->resi, '#POS') && !str_starts_with($order->resi, '#SHP') && !str_starts_with($order->resi, '#ONL'))
+                                <div style="font-size: 11px; font-weight: 700; color: #15803d; margin-top: 5px;">Kurir: {{ $order->resi }}</div>
                             @endif
                         </td>
                         <td style="width: 180px;">
@@ -177,7 +189,7 @@
                                         <option value="Belum Bayar" {{ $order->status == 'Belum Bayar' ? 'selected' : '' }}>Menunggu Diambil</option>
                                         <option value="Dikirim" {{ $order->status == 'Dikirim' ? 'selected' : '' }}>Selesai / Lunas</option>
                                         <option value="Dibatalkan" {{ $order->status == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
-                                    @elseif($order->tipe_pesanan == 'POS Offline')
+                                    @elseif(str_contains($order->tipe_pesanan, 'POS Offline') || $order->tipe_pesanan == 'Shopee')
                                         <option value="Dikirim" {{ $order->status == 'Dikirim' ? 'selected' : '' }}>Selesai</option>
                                         <option value="Dibatalkan" {{ $order->status == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                                     @else
@@ -189,8 +201,10 @@
                                 </select>
                                 
                                 @if($order->tipe_pesanan == 'Online')
-                                    <input type="text" name="resi" value="{{ (str_starts_with($order->resi, 'ONL-') ? '' : $order->resi) }}" placeholder="Input Resi Pengiriman..." class="status-select">
+                                    <!-- Jika Online biasa, biarkan kosong agar admin menginput resi JNE/JNT/dll -->
+                                    <input type="text" name="resi" value="{{ (str_starts_with($order->resi, '#ONL') ? '' : $order->resi) }}" placeholder="Input Resi Pengiriman..." class="status-select">
                                 @else
+                                    <!-- Jika POS/Shopee/Booking, teruskan kode resi bawaan sistem -->
                                     <input type="hidden" name="resi" value="{{ $order->resi }}">
                                 @endif
                                 
@@ -202,15 +216,17 @@
                     <div id="modal-{{ $order->id }}" class="modal-overlay">
                         <div class="modal-content">
                             <button class="modal-close" onclick="tutupModal('{{ $order->id }}')">✕</button>
-                            <h2 style="margin: 0 0 20px 0; font-size: 20px; font-family: 'DM Serif Display', serif;">Detail Pesanan #{{ $order->nomor_pesanan ?? $order->resi }}</h2>
+                            <h2 style="margin: 0 0 20px 0; font-size: 20px; font-family: 'DM Serif Display', serif;">Detail Pesanan {{ $order->resi }}</h2>
                             
                             <div class="info-group">
                                 <div class="info-label">Tipe Pesanan</div>
                                 <div class="info-value">
                                     @if($order->tipe_pesanan == 'Booking')
                                         🛍️ Ambil di Toko (Booking)
-                                    @elseif($order->tipe_pesanan == 'POS Offline')
+                                    @elseif(str_contains($order->tipe_pesanan, 'POS Offline'))
                                         🛒 Kasir Toko Fisik (POS)
+                                    @elseif($order->tipe_pesanan == 'Shopee')
+                                        🟠 Pembelian via Shopee
                                     @else
                                         🚚 Kirim ke Alamat (Online)
                                     @endif
@@ -228,7 +244,7 @@
                                 <div class="info-label">Alamat / Keterangan</div>
                                 <div class="info-value" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-top: 5px;">
                                     {{ $order->wilayah }}<br>
-                                    <span style="font-size: 13px; color: #475569;">{{ $order->alamat_lengkap }}</span>
+                                    <span style="font-size: 13px; color: #475569;">{{ $order->alamat_lengkap ?? '-' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -257,7 +273,7 @@
                 var resi = formElement.querySelector('input[name="resi"]').value.trim();
                 
                 if (status === 'Dikirim' && resi === '') {
-                    alert('⚠️ Peringatan: Anda wajib mengisi Nomor Resi Pengiriman sebelum mengubah status menjadi "Dikirim"!');
+                    alert('⚠️ Peringatan: Anda wajib mengisi Nomor Resi Pengiriman (JNE/JNT/dll) sebelum mengubah status menjadi "Dikirim"!');
                     formElement.querySelector('input[name="resi"]').focus();
                     return false; 
                 }

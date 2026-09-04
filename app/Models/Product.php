@@ -9,9 +9,10 @@ class Product extends Model
 {
     use HasFactory;
 
-    // Mengizinkan kolom-kolom ini diisi data
+    // Mengizinkan kolom-kolom ini diisi data (Mass Assignment)
     protected $fillable = [
         'nama_produk',
+        'kategori_gender', 
         'deskripsi',
         'ukuran',
         'harga',
@@ -25,6 +26,7 @@ class Product extends Model
         'gambar_7',
         'gambar_8',
     ];
+    
     public function sizes()
     {
         return $this->hasMany(ProductSize::class);

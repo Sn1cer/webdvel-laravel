@@ -33,7 +33,10 @@
         .cart-item { display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;}
         .cart-item-info { flex: 1; }
         .cart-item-title { font-weight: 700; margin-bottom: 4px; color: #1e293b;}
-        .cart-item-size { font-size: 11px; color: #0f172a; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px;}
+        
+        /* Dropdown Ganti Ukuran di Keranjang */
+        .cart-item-size-select { font-size: 11px; color: #0f172a; background: #e2e8f0; padding: 2px 4px; border-radius: 4px; border: 1px solid #cbd5e1; outline: none; cursor: pointer; margin-bottom: 4px;}
+        
         .cart-item-price { color: #64748b; font-weight: 600; }
         .qty-controls { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border);}
         .qty-btn { background: none; border: none; font-weight: 800; cursor: pointer; color: var(--text); font-size: 14px; padding: 0 5px;}
@@ -41,12 +44,19 @@
         
         /* Total & Checkout */
         .cart-footer { border-top: 2px dashed var(--border); padding-top: 20px; margin-top: 15px; }
-        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; margin-bottom: 15px; }
+        
+        /* Pilihan Pembayaran */
+        .payment-options { display: flex; gap: 10px; margin-bottom: 15px; }
+        .pay-opt-label { flex: 1; text-align: center; background: #f1f5f9; border: 1px solid var(--border); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; transition: 0.2s; }
+        .pay-opt-radio { display: none; }
+        .pay-opt-radio:checked + .pay-opt-label { background: #dbeafe; border-color: #3b82f6; color: #1e3a8a; }
+
         .btn-checkout { background: #15803d; color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: inherit;}
         .btn-checkout:hover { background: #166534; transform: scale(1.02); }
         .btn-checkout:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
 
-        /* --- MODAL PILIH UKURAN --- */
+        /* --- MODAL PILIH UKURAN AWAL --- */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(3px);}
         .modal-box { background: white; padding: 25px; border-radius: 12px; width: 400px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 15px; color: var(--text); }
@@ -97,6 +107,7 @@
         }
     </style>
 
+    <!-- AREA CETAK STRUK -->
     @if(session('print_order'))
         <div id="print-area">
             <div style="text-align: center; margin-bottom: 15px;">
@@ -156,13 +167,10 @@
                     <td>TOTAL</td>
                     <td style="text-align: right;">Rp {{ number_format(session('print_order')->total_harga, 0, ',', '.') }}</td>
                 </tr>
+                <!-- Menampilkan metode pembayaran yang dipilih (Tunai / QRIS) -->
                 <tr>
-                    <td>TUNAI</td>
+                    <td>{{ str_replace('POS Offline (', '', str_replace(')', '', session('print_order')->tipe_pesanan)) }}</td>
                     <td style="text-align: right;">Rp {{ number_format(session('print_order')->total_harga, 0, ',', '.') }}</td>
-                </tr>
-                <tr>
-                    <td>KEMBALI</td>
-                    <td style="text-align: right;">Rp 0</td>
                 </tr>
             </table>
             
@@ -174,7 +182,10 @@
             </div>
         </div>
     @endif
+    <!-- AKHIR AREA CETAK STRUK -->
+
     <div class="pos-container">
+        <!-- Area Produk Kiri -->
         <div class="product-area">
             <h2 class="page-title">Pilih Barang Pelanggan (Offline)</h2>
             
@@ -191,6 +202,7 @@
 
             <div class="product-grid">
                 @foreach($products as $product)
+                    <!-- Menyimpan data sizesArray di atribut JSON untuk dipanggil fungsi JS -->
                     <div class="product-card" onclick="openSizeModal({{ $product->id }}, '{{ addslashes($product->nama_produk) }}', {{ $product->harga }}, {{ json_encode($product->sizes) }})">
                         @if($product->gambar)
                             <img src="{{ asset('images/'.$product->gambar) }}" class="product-img" alt="img">
@@ -205,6 +217,7 @@
             </div>
         </div>
 
+        <!-- Area Keranjang Kanan -->
         <div class="cart-area">
             <div class="cart-header">🛒 Struk Belanja</div>
             <div class="cart-items" id="cart-container">
@@ -219,6 +232,15 @@
                 
                 <form action="{{ route('admin.pos.checkout') }}" method="POST" id="checkout-form">
                     @csrf
+                    <!-- Pilihan Pembayaran (Radio Button) -->
+                    <div class="payment-options">
+                        <input type="radio" id="pay_tunai" name="metode_pembayaran" value="Tunai" class="pay-opt-radio" checked>
+                        <label for="pay_tunai" class="pay-opt-label">💵 Tunai</label>
+
+                        <input type="radio" id="pay_qris" name="metode_pembayaran" value="QRIS" class="pay-opt-radio">
+                        <label for="pay_qris" class="pay-opt-label">📱 QRIS</label>
+                    </div>
+
                     <input type="hidden" name="cart_data" id="cart-data-input">
                     <button type="button" id="btn-submit-order" class="btn-checkout" disabled onclick="submitOrder()">💸 Bayar & Potong Stok</button>
                 </form>
@@ -226,13 +248,13 @@
         </div>
     </div>
 
+    <!-- Modal Pilih Ukuran Awal -->
     <div class="modal-overlay" id="sizeModal">
         <div class="modal-box">
             <div class="modal-title" id="modalProductName">Nama Produk</div>
             <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Pilih ukuran yang dibeli pelanggan:</p>
             
-            <div class="size-grid" id="modalSizeGrid">
-                </div>
+            <div class="size-grid" id="modalSizeGrid"></div>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeSizeModal()">Batal</button>
@@ -247,15 +269,17 @@
         let cart = [];
         let tempProduct = null;
         let tempSelectedSize = null;
+        let tempSizesArray = []; // Simpan varian ukuran asli produk untuk fungsi ganti ukuran nanti
 
         function formatRupiah(number) {
             return new Intl.NumberFormat('id-ID').format(number);
         }
 
-        // --- FUNGSI MODAL ---
+        // --- FUNGSI MODAL PILIH UKURAN AWAL ---
         function openSizeModal(id, name, price, sizesArray) {
             tempProduct = { id, name, price };
             tempSelectedSize = null;
+            tempSizesArray = sizesArray;
 
             document.getElementById('modalProductName').innerText = name;
             const grid = document.getElementById('modalSizeGrid');
@@ -297,13 +321,13 @@
 
         document.getElementById('btnConfirmAdd').addEventListener('click', function() {
             if(tempSelectedSize) {
-                addToCart(tempProduct.id, tempProduct.name, tempProduct.price, tempSelectedSize.ukuran, tempSelectedSize.stok);
+                addToCart(tempProduct.id, tempProduct.name, tempProduct.price, tempSelectedSize.ukuran, tempSelectedSize.stok, tempSizesArray);
                 closeSizeModal();
             }
         });
 
-        // --- FUNGSI KERANJANG ---
-        function addToCart(id, name, price, ukuran, maxStock) {
+        // --- FUNGSI KERANJANG (CART) ---
+        function addToCart(id, name, price, ukuran, maxStock, sizesArray) {
             let uniqueId = id + '-' + ukuran; 
             let existingItem = cart.find(item => item.uniqueId === uniqueId);
             
@@ -314,9 +338,43 @@
                     alert(`Stok ukuran ${ukuran} tidak mencukupi! Sisa stok hanya ${maxStock}.`);
                 }
             } else {
-                cart.push({ uniqueId: uniqueId, id: id, name: name, price: price, ukuran: ukuran, qty: 1, max: maxStock });
+                // Simpan juga rawSizes (seluruh ukuran yang ada) agar bisa dipakai untuk select dropdown nanti
+                cart.push({ uniqueId: uniqueId, id: id, name: name, price: price, ukuran: ukuran, qty: 1, max: maxStock, rawSizes: sizesArray });
             }
             renderCart();
+        }
+
+        // --- FUNGSI UBAH UKURAN LANGSUNG DARI KERANJANG (BARU) ---
+        function changeCartSize(uniqueId, newUkuran) {
+            let itemIndex = cart.findIndex(item => item.uniqueId === uniqueId);
+            if (itemIndex > -1) {
+                let item = cart[itemIndex];
+                
+                // Cari data stok dari ukuran yang baru dipilih
+                let newSizeData = item.rawSizes.find(s => s.ukuran === newUkuran);
+                
+                if (newSizeData) {
+                    // Update ID unik karena ukuran berubah
+                    let newUniqueId = item.id + '-' + newUkuran;
+                    
+                    // Cek apakah ukuran baru ini sudah ada di baris lain di dalam keranjang
+                    let existInOtherRow = cart.find(i => i.uniqueId === newUniqueId && i !== item);
+                    
+                    if(existInOtherRow) {
+                        alert(`Ukuran ${newUkuran} sudah ada di keranjang. Jika ingin menambah, gunakan tombol (+) pada ukuran tersebut.`);
+                        renderCart(); // Kembalikan tampilan
+                        return;
+                    }
+
+                    // Reset kuantitas ke 1 agar aman (menghindari order qty > stok)
+                    item.uniqueId = newUniqueId;
+                    item.ukuran = newUkuran;
+                    item.max = newSizeData.stok;
+                    item.qty = 1; 
+
+                    renderCart();
+                }
+            }
         }
 
         function updateQty(uniqueId, change) {
@@ -327,6 +385,7 @@
                     cart = cart.filter(i => i.uniqueId !== uniqueId);
                 } else if (item.qty > item.max) {
                     item.qty = item.max; 
+                    alert('Kuantitas tidak bisa melebihi sisa stok aktual di gudang ('+item.max+' pcs).');
                 }
             }
             renderCart();
@@ -350,12 +409,24 @@
             cart.forEach(item => {
                 total += (item.price * item.qty);
                 
+                // Membuat opsi Select dropdown (hanya tampilkan ukuran yang stoknya > 0)
+                let selectOptions = '';
+                item.rawSizes.forEach(s => {
+                    if(s.stok > 0) {
+                        let isSelected = (s.ukuran === item.ukuran) ? 'selected' : '';
+                        selectOptions += `<option value="${s.ukuran}" ${isSelected}>Size ${s.ukuran}</option>`;
+                    }
+                });
+
                 let div = document.createElement('div');
                 div.className = 'cart-item';
                 div.innerHTML = `
                     <div class="cart-item-info">
                         <div class="cart-item-title">${item.name}</div>
-                        <div class="cart-item-size">Size: ${item.ukuran}</div>
+                        <!-- DROPDOWN UBAH UKURAN -->
+                        <select class="cart-item-size-select" onchange="changeCartSize('${item.uniqueId}', this.value)">
+                            ${selectOptions}
+                        </select>
                         <div class="cart-item-price">Rp ${formatRupiah(item.price)}</div>
                     </div>
                     <div class="qty-controls">
@@ -372,7 +443,8 @@
         }
 
         function submitOrder() {
-            if(confirm('Proses pembayaran tunai ini? Stok varian akan otomatis terpotong.')) {
+            let metodeTerpilih = document.querySelector('input[name="metode_pembayaran"]:checked').value;
+            if(confirm(`Selesaikan pembayaran Rp ${document.getElementById('total-price').innerText} menggunakan ${metodeTerpilih}? Stok akan otomatis terpotong.`)) {
                 document.getElementById('cart-data-input').value = JSON.stringify(cart);
                 document.getElementById('checkout-form').submit();
             }

@@ -38,8 +38,8 @@
         .form-group { margin-bottom: 20px; }
         .form-label { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
         
-        /* Input & Textarea */
-        .form-input, .form-textarea {
+        /* Input, Select & Textarea */
+        .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid var(--border);
@@ -49,12 +49,13 @@
             color: var(--text);
             transition: 0.2s;
             box-sizing: border-box;
+            background-color: white;
         }
         .image-upload-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; margin-bottom: 20px;}
         .upload-box { border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; text-align: center; background: #f8fafc;}
         .upload-box label { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: block; color: #1e293b; }
         .upload-box input { font-size: 12px; width: 100%; }
-        .form-input:focus, .form-textarea:focus {
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
@@ -118,6 +119,17 @@
                     <input type="text" name="nama_produk" class="form-input" placeholder="Contoh: Slim Fit Navy Blue" required>
                 </div>
                 
+                <div class="form-group">
+                    <label class="form-label">Kategori Gender <span style="color: var(--red);">*</span></label>
+                    <select name="kategori_gender" class="form-select" required>
+                        <option value="" disabled selected>-- Pilih Kategori --</option>
+                        <option value="Men">Men (Pria)</option>
+                        <option value="Women">Women (Wanita)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Harga Jual (Rp) <span style="color: var(--red);">*</span></label>
                     <input type="number" name="harga" class="form-input" placeholder="Contoh: 185000" required>

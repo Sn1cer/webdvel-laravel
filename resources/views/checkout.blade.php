@@ -74,23 +74,28 @@
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 768px) {
         .container-checkout { 
-            flex-direction: column-reverse; 
-            gap: 20px; 
-            margin: 20px auto; 
-        }
-        .checkout-summary { 
-            width: 100%; 
-            position: static; 
-            padding: 30px 20px;
+            display: flex !important;
+            flex-direction: column !important; 
+            gap: 20px !important; 
+            margin: 20px auto !important; 
         }
         .checkout-form {
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
+            order: 1 !important; /* MEMAKSA FORM PENGIRIMAN SELALU DI ATAS PADA HP */
+            width: 100% !important;
+            padding: 20px !important;
+            box-sizing: border-box !important;
+        }
+        .checkout-summary { 
+            order: 2 !important; /* MEMAKSA RINGKASAN PESANAN SELALU DI BAWAH PADA HP */
+            width: 100% !important; 
+            position: relative !important; /* Mematikan sticky agar tidak aneh di HP */
+            top: 0 !important;
+            padding: 30px 20px !important;
+            box-sizing: border-box !important;
         }
         .form-row {
-            flex-direction: column; 
-            gap: 0;
+            flex-direction: column !important; 
+            gap: 0 !important;
         }
     }
 </style>

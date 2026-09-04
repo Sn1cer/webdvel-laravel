@@ -25,10 +25,26 @@
     .product-info { padding: 10px 0; }
     .breadcrumb { font-size: 14px; color: #64748b; margin-bottom: 15px; }
     .breadcrumb a { color: var(--accent); text-decoration: none; }
-    .product-title { font-size: 36px; font-weight: 800; margin-bottom: 15px; line-height: 1.2; font-family: 'DM Serif Display', serif;}
-    .product-price { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 25px; }
+    .product-title { font-size: 36px; font-weight: 800; margin-bottom: 10px; line-height: 1.2; font-family: 'DM Serif Display', serif;}
+    .product-price { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 15px; }
     
-    .product-description { font-size: 15px; line-height: 1.7; color: #475569; margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border); white-space: pre-line;}
+    /* CSS Kategori Gender (Baru) */
+    .category-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 25px;
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .category-badge.men { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+    .category-badge.women { background: #fdf4ff; color: #9d174d; border-color: #fbcfe8; }
+
+    .product-description-container { margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border); }
+    .product-description { font-size: 15px; line-height: 1.7; color: #475569; white-space: pre-line;}
 
     /* Pilihan Ukuran */
     .section-label { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block; color: var(--text); }
@@ -61,6 +77,35 @@
     
     .btn-add-cart { flex: 1; background: var(--text); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: center; align-items: center; text-decoration: none; box-sizing: border-box;}
     .btn-add-cart:hover { background: var(--accent); }
+
+    /* --- CSS MODAL POP-UP SIZE CHART --- */
+    .modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; opacity: 1; }
+    .modal-content {
+        background: white; border-radius: 12px; width: 90%; max-width: 450px;
+        padding: 30px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transform: translateY(-20px); transition: transform 0.3s ease;
+    }
+    .modal-overlay.show .modal-content { transform: translateY(0); }
+    .modal-close {
+        position: absolute; top: 15px; right: 20px; font-size: 28px; color: #94a3b8;
+        cursor: pointer; background: none; border: none; padding: 0; line-height: 1; transition: 0.2s;
+    }
+    .modal-close:hover { color: var(--red); transform: scale(1.1); }
+    .size-chart-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: center; }
+    .size-chart-table th { background: #f8fafc; padding: 12px; font-size: 13px; color: var(--text); border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px;}
+    .size-chart-table td { padding: 10px; font-size: 14px; color: #475569; border: 1px solid var(--border); }
+    .size-chart-table tr:hover { background: #f1f5f9; }
+    
+    .btn-size-chart {
+        background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 700;
+        cursor: pointer; text-decoration: underline; padding: 0; transition: 0.2s;
+    }
+    .btn-size-chart:hover { filter: brightness(1.2); }
 
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 768px) {
@@ -122,7 +167,18 @@
             <h1 class="product-title">{{ $product->nama_produk }}</h1>
             <div class="product-price">Rp {{ number_format($product->harga, 0, ',', '.') }}</div>
             
-            <div class="product-description">{{ $product->deskripsi ?? "Belum ada deskripsi untuk produk ini. Terbuat dari bahan denim premium dengan kualitas jahitan terbaik khas D'Vel Jeans." }}</div>
+            <!-- BADGE KATEGORI GENDER -->
+            @if($product->kategori_gender)
+                <div class="category-badge {{ strtolower($product->kategori_gender) }}">
+                    👖 Kategori: {{ $product->kategori_gender }}
+                </div>
+            @endif
+            
+            <!-- DESKRIPSI PRODUK -->
+            <div class="product-description-container">
+                <label class="section-label">📝 Detail Produk</label>
+                <div class="product-description">{{ $product->deskripsi ?? "Belum ada deskripsi untuk produk ini. Terbuat dari bahan denim premium dengan kualitas jahitan terbaik khas D'Vel Jeans." }}</div>
+            </div>
 
             @if($product->stok > 0)
                 <div id="sisa-stok-label" style="margin-bottom: 20px; font-weight: 700; color: #16a34a;">
@@ -138,7 +194,12 @@
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-                        <label class="section-label">Pilih Ukuran (Size)</label>
+                        <!-- HEADER SIZE & TOMBOL SIZE CHART -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label class="section-label" style="margin-bottom: 0;">Pilih Ukuran (Size)</label>
+                            <button type="button" class="btn-size-chart" onclick="openSizeChart()">📏 Panduan Ukuran</button>
+                        </div>
+                        
                         <div class="size-selector">
                             @forelse($ukuranTersedia as $size)
                                 @if($size->stok > 0)
@@ -164,7 +225,12 @@
                 @endauth
 
                 @guest
-                    <label class="section-label">Pilih Ukuran (Size)</label>
+                    <!-- HEADER SIZE & TOMBOL SIZE CHART -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <label class="section-label" style="margin-bottom: 0;">Pilih Ukuran (Size)</label>
+                        <button type="button" class="btn-size-chart" onclick="openSizeChart()">📏 Panduan Ukuran</button>
+                    </div>
+
                     <div class="size-selector">
                         @forelse($ukuranTersedia as $size)
                             <label class="{{ $size->stok == 0 ? 'size-out-of-stock' : '' }}" style="opacity: 0.5; cursor: not-allowed;" title="{{ $size->stok == 0 ? 'Stok Habis' : 'Login untuk memilih' }}">
@@ -196,10 +262,48 @@
 
         </div>
     </div>
+
+    <!-- HTML MODAL POP-UP SIZE CHART -->
+    <div class="modal-overlay" id="sizeChartModal" onclick="closeSizeChart(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button type="button" class="modal-close" onclick="closeSizeChart()">&times;</button>
+            <h3 style="margin-top: 0; margin-bottom: 5px; font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text);">Panduan Ukuran</h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">*Toleransi ukuran 1-2 cm dari tabel karena proses penjahitan.</p>
+            
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <table class="size-chart-table">
+                    <thead>
+                        <tr>
+                            <th>Size Celana</th>
+                            <th>Lingkar Pinggang</th>
+                            <th>Panjang Celana</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>27</strong></td><td>70 cm</td><td>98 cm</td></tr>
+                        <tr><td><strong>28</strong></td><td>72 cm</td><td>98 cm</td></tr>
+                        <tr><td><strong>29</strong></td><td>75 cm</td><td>99 cm</td></tr>
+                        <tr><td><strong>30</strong></td><td>77 cm</td><td>99 cm</td></tr>
+                        <tr><td><strong>31</strong></td><td>80 cm</td><td>100 cm</td></tr>
+                        <tr><td><strong>32</strong></td><td>82 cm</td><td>100 cm</td></tr>
+                        <tr><td><strong>33</strong></td><td>85 cm</td><td>101 cm</td></tr>
+                        <tr><td><strong>34</strong></td><td>87 cm</td><td>101 cm</td></tr>
+                        <tr><td><strong>35</strong></td><td>90 cm</td><td>102 cm</td></tr>
+                        <tr><td><strong>36</strong></td><td>92 cm</td><td>102 cm</td></tr>
+                        <tr><td><strong>37</strong></td><td>95 cm</td><td>103 cm</td></tr>
+                        <tr><td><strong>38</strong></td><td>97 cm</td><td>103 cm</td></tr>
+                        <tr><td><strong>39</strong></td><td>100 cm</td><td>104 cm</td></tr>
+                        <tr><td><strong>40</strong></td><td>102 cm</td><td>104 cm</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
+    // Script Ganti Gambar
     function changeMainImage(element, newSrc) {
         const mainImg = document.getElementById('mainImage');
         mainImg.style.opacity = '0.7';
@@ -215,6 +319,20 @@
         element.classList.add('active-thumb');
     }
 
+    // Script Pop-Up Size Chart
+    function openSizeChart() {
+        document.getElementById('sizeChartModal').classList.add('show');
+        document.body.style.overflow = 'hidden'; // Mengunci layar belakang agar tidak bisa di-scroll
+    }
+
+    function closeSizeChart(e) {
+        if (e && e.target.id !== 'sizeChartModal') return;
+        
+        document.getElementById('sizeChartModal').classList.remove('show');
+        document.body.style.overflow = 'auto'; // Mengembalikan scroll layar belakang
+    }
+
+    // Script Kalkulasi Maksimal Stok
     document.addEventListener("DOMContentLoaded", function() {
         const sizeRadios = document.querySelectorAll('.size-radio');
         const qtyInput = document.getElementById('qty-input');

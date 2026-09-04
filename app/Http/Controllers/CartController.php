@@ -58,7 +58,9 @@ class CartController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Yey! Produk berhasil ditambahkan ke keranjang Anda 🛒');
+        // --- UPDATE DARI DOSEN PENGUJI ---
+        // Redirect otomatis ke halaman keranjang (bukan back/kembali ke detail produk)
+        return redirect()->route('cart.index')->with('success', 'Yey! Produk berhasil ditambahkan ke keranjang Anda 🛒');
     }
     
     public function update(Request $request, Cart $cart)

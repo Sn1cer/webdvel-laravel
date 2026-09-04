@@ -12,10 +12,10 @@
             font-size: 12px; 
             margin: 0; 
             padding: 20px; 
-            position: relative; /* Diperlukan untuk absolute positioning */
+            position: relative; 
         }
         
-        /* Waktu Cetak Kustom (Pengganti bawaan browser) */
+        /* Waktu Cetak Kustom */
         .print-timestamp {
             position: absolute;
             top: 20px;
@@ -35,13 +35,16 @@
 
         /* Tabel Data */
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #999; padding: 8px 10px; text-align: left; }
+        th, td { border: 1px solid #999; padding: 8px 10px; text-align: left; vertical-align: top;}
         th { background-color: #f5f5f5; font-weight: bold; text-transform: uppercase; font-size: 10px; }
         
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-bold { font-weight: bold; }
         
+        /* Keterangan Tipe Transaksi */
+        .tipe-keterangan { font-size: 10px; color: #666; margin-top: 2px;}
+
         /* Baris Total */
         .total-row { background-color: #f5f5f5; }
         .total-row td { font-size: 14px; font-weight: bold; }
@@ -51,9 +54,7 @@
         .ttd-box td { border: none; text-align: center; width: 33%; padding: 0; }
         .ttd-space { height: 80px; }
 
-        /* =========================================
-           TOMBOL CETAK & PENGATURAN MEDIA PRINT
-           ========================================= */
+        /* Tombol Cetak */
         .btn-print {
             position: fixed;
             top: 20px;
@@ -72,21 +73,10 @@
         }
         .btn-print:hover { background-color: #0f172a; transform: translateY(-2px); }
 
-        /* Menyembunyikan elemen tertentu saat proses cetak/PDF berjalan */
         @media print {
             .no-print { display: none !important; }
-            
-            /* MENGHILANGKAN URL DAN HALAMAN BAWAAN BROWSER */
-            @page { 
-                margin: 0; 
-            }
-            
-            /* MEMBERIKAN JARAK KERTAS MANUAL AGAR KONTEN TIDAK TERPOTONG */
-            body { 
-                padding: 1.5cm; 
-            }
-
-            /* Menyesuaikan posisi timestamp saat dicetak */
+            @page { margin: 0; }
+            body { padding: 1.5cm; }
             .print-timestamp {
                 top: 1.5cm;
                 left: 1.5cm;
@@ -96,17 +86,15 @@
 </head>
 <body>
 
-    <!-- Waktu yang akan muncul di pojok kiri atas (Format: 8/3/26, 11:10 PM) -->
     <div class="print-timestamp">
         {{ \Carbon\Carbon::now()->format('n/j/y, g:i A') }}
     </div>
 
-    <!-- Tombol ini akan disembunyikan secara otomatis saat PDF terbuat -->
     <button class="btn-print no-print" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
 
     <div class="kop-surat">
         <h1>D'Vel Jeans</h1>
-        <p>Jl. Contoh Skripsi No. 123, Kota Cimahi, Jawa Barat<br>Telp: 0812-3456-7890 | Email: admin@dveljeans.com</p>
+        <p>Pasar Antri Baru, Kota Cimahi, Jawa Barat<br>Telp: 0812-3456-7890 | Email: admin@dveljeans.com</p>
     </div>
 
     <div class="judul-laporan">Laporan Pendapatan Penjualan</div>
@@ -117,16 +105,20 @@
         @else
             Periode: Keseluruhan Waktu (Hingga {{ \Carbon\Carbon::now()->format('d M Y') }})
         @endif
+        <br>
+        <span style="font-size: 11px; margin-top: 5px; display: inline-block;">
+            *Hanya mencakup transaksi yang sudah Selesai/Lunas (termasuk POS & Shopee)
+        </span>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th width="5%">No</th>
+                <th width="5%" class="text-center">No</th>
                 <th width="15%">Tanggal</th>
-                <th width="20%">No. Order</th>
+                <th width="20%">No. Resi & Tipe</th>
                 <th width="35%">Nama Pelanggan</th>
-                <th width="25%" class="text-right">Total Transaksi (Rp)</th>
+                <th width="25%" class="text-right">Total Pemasukan (Rp)</th>
             </tr>
         </thead>
         <tbody>
@@ -135,16 +127,36 @@
                 <tr>
                     <td class="text-center">{{ $no++ }}</td>
                     <td>{{ $order->created_at->format('d/m/Y') }}</td>
-                    <td>#{{ $order->nomor_pesanan }}</td>
+                    <td>
+                        <!-- Menampilkan Resi Tanpa Hardcode -->
+                        <div class="font-bold">{{ $order->resi }}</div>
+                        <div class="tipe-keterangan">
+                            @if($order->tipe_pesanan == 'Booking')
+                                (Booking Toko)
+                            @elseif(str_contains($order->tipe_pesanan, 'POS Offline'))
+                                (Kasir POS Offline)
+                            @elseif($order->tipe_pesanan == 'Shopee')
+                                (Marketplace Shopee)
+                            @else
+                                (Pesanan Online)
+                            @endif
+                        </div>
+                    </td>
                     <td>{{ $order->nama_depan }} {{ $order->nama_belakang }}</td>
                     <td class="text-right">{{ number_format($order->total_harga, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
             
-            <tr class="total-row">
-                <td colspan="4" class="text-right">TOTAL PENDAPATAN BERSIH:</td>
-                <td class="text-right">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</td>
-            </tr>
+            @if($orders->count() == 0)
+                <tr>
+                    <td colspan="5" class="text-center" style="padding: 20px;">Tidak ada transaksi pada periode ini.</td>
+                </tr>
+            @else
+                <tr class="total-row">
+                    <td colspan="4" class="text-right">TOTAL PENDAPATAN BERSIH:</td>
+                    <td class="text-right">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</td>
+                </tr>
+            @endif
         </tbody>
     </table>
 
@@ -157,12 +169,10 @@
                 Mengetahui,<br>
                 <div class="ttd-space"></div>
                 <b><u>Pemilik D'Vel Jeans</u></b><br>
-                NIP. 123456789
             </td>
         </tr>
     </table>
 
-    <!-- SCRIPT UNTUK OTOMATIS MEMUNCULKAN DIALOG PRINT SAAT HALAMAN DIBUKA -->
     <script>
         window.onload = function() {
             setTimeout(function() {

@@ -50,7 +50,7 @@
     .title { font-size: 18px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
     .price { color: var(--accent); font-size: 20px; font-weight: 800; margin-bottom: 16px; }
     
-    /* Tombol Beli yang Diperbarui */
+    /* Tombol Beli */
     .btn-buy { 
         display: flex; 
         justify-content: center; 
@@ -66,6 +66,29 @@
         box-sizing: border-box; 
     }
     .btn-buy:hover { background: var(--accent); }
+
+    /* Tombol Lihat Semua Katalog */
+    .view-all-container { text-align: center; margin-top: 50px; }
+    .btn-view-all { 
+        display: inline-block; 
+        background: transparent; 
+        color: var(--text); 
+        border: 2px solid var(--text); 
+        padding: 12px 35px; 
+        border-radius: 30px; 
+        font-weight: 800; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        font-size: 14px;
+        text-decoration: none; 
+        transition: all 0.3s ease; 
+    }
+    .btn-view-all:hover { 
+        background: var(--text); 
+        color: white; 
+        transform: translateY(-3px); 
+        box-shadow: 0 10px 15px rgba(0,0,0,0.1); 
+    }
 
     /* RESPONSIVE KHUSUS BERANDA */
     @media (max-width: 768px) {
@@ -131,7 +154,8 @@
         <h2 class="section-title">Koleksi Terbaru Kami</h2>
         
         <div class="grid">
-            @forelse($products as $product)
+            <!-- Menambahkan ->take(4) agar hanya melooping 4 data produk terbaru -->
+            @forelse($products->take(4) as $product)
                 <div class="card">
                     <div class="card-img">
                         @if($product->gambar)
@@ -152,6 +176,15 @@
                 </div>
             @endforelse
         </div>
+
+        <!-- Tombol "Lihat Semua Katalog" -->
+        @if($products->count() > 0)
+        <div class="view-all-container">
+            <!-- Pastikan route('katalog') sesuai dengan nama route halaman katalog Anda. Jika namanya beda, sesuaikan tulisan 'katalog' di bawah ini -->
+            <a href="{{ url('/katalog') }}" class="btn-view-all">Lihat Semua Koleksi ➔</a>
+        </div>
+        @endif
+
     </div>
 @endsection
 

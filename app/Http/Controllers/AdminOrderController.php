@@ -17,7 +17,7 @@ class AdminOrderController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter berdasarkan Tipe Pesanan (Online, Booking, POS)
+        // Filter 
         if ($request->has('tipe') && $request->tipe != 'Semua') {
             $query->where('tipe_pesanan', $request->tipe);
         }
@@ -39,7 +39,7 @@ class AdminOrderController extends Controller
             $updateData['resi'] = $request->resi;
         }
 
-        // LOGIKA PENGEMBALIAN STOK (JIKA ADMIN MEMBATALKAN PESANAN MANUAL)
+        // pembatalan manual by admin
         if ($newStatus == 'Dibatalkan' && $oldStatus != 'Dibatalkan') {
             foreach ($order->details as $detail) {
                 $produk = Product::find($detail->product_id);
@@ -48,7 +48,6 @@ class AdminOrderController extends Controller
                     $produk->save();
                 }
 
-                // 2. Kembalikan stok spesifik pada varian ukuran
                 $productSize = ProductSize::where('product_id', $detail->product_id)
                                 ->where('ukuran', $detail->ukuran)->first();
                 if ($productSize) {
