@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/keranjang/tambah', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/keranjang/{cart}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/keranjang/{cart}', [CartController::class, 'destroy'])->name('cart.destroy');
+    Route::get('/katalog', [\App\Http\Controllers\FrontController::class, 'katalog'])->name('katalog');
 
     // Rute Checkout & Pemesanan
     Route::get('/checkout', [OrderController::class, 'create'])->name('checkout.index');

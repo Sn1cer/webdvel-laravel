@@ -242,7 +242,7 @@
                     </div>
 
                     <input type="hidden" name="cart_data" id="cart-data-input">
-                    <button type="button" id="btn-submit-order" class="btn-checkout" disabled onclick="submitOrder()">💸 Bayar & Potong Stok</button>
+                    <button type="button" id="btn-submit-order" class="btn-checkout" disabled onclick="submitOrder()">💸 Bayar & Mengurangi Stok</button>
                 </form>
             </div>
         </div>
@@ -444,7 +444,7 @@
 
         function submitOrder() {
             let metodeTerpilih = document.querySelector('input[name="metode_pembayaran"]:checked').value;
-            if(confirm(`Selesaikan pembayaran Rp ${document.getElementById('total-price').innerText} menggunakan ${metodeTerpilih}? Stok akan otomatis terpotong.`)) {
+            if(confirm(`Selesaikan pembayaran ${document.getElementById('total-price').innerText} menggunakan ${metodeTerpilih}? Stok akan otomatis berkurang.`)) {
                 document.getElementById('cart-data-input').value = JSON.stringify(cart);
                 document.getElementById('checkout-form').submit();
             }

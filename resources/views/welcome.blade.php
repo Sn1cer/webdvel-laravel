@@ -38,17 +38,66 @@
     .marquee-item { display: flex; align-items: center; gap: 16px; font-size: 11px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: #0d0d0d; }
     .marquee-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(0,0,0,0.4); }
 
-    /* PRODUK GRID */
+    /* PRODUK GRID (DIPERBARUI AGAR SEJAJAR) */
     .container { max-width: 1200px; margin: 60px auto; padding: 0 20px; }
     .section-title { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 40px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
-    .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.3s; }
+    
+    .grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+        gap: 30px; 
+        align-items: stretch; /* Memastikan semua card ditarik sama tinggi */
+    }
+    
+    .card { 
+        background: white; 
+        border-radius: 12px; 
+        overflow: hidden; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        transition: transform 0.3s; 
+        display: flex;             /* Trik Flexbox */
+        flex-direction: column;    /* Menyusun konten secara vertikal */
+        height: 100%;              /* Mengisi penuh ruang dari grid */
+    }
     .card:hover { transform: translateY(-8px); box-shadow: 0 12px 20px rgba(0,0,0,0.1); }
-    .card-img { height: 320px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    
+    .card-img { 
+        height: 320px; 
+        background: #e2e8f0; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        overflow: hidden; 
+        flex-shrink: 0; /* Mencegah gambar menyusut */
+    }
     .card-img img { width: 100%; height: 100%; object-fit: cover; }
-    .card-body { padding: 24px; }
-    .title { font-size: 18px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
-    .price { color: var(--accent); font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    
+    .card-body { 
+        padding: 24px; 
+        display: flex;             /* Trik Flexbox */
+        flex-direction: column;    /* Menyusun konten vertikal */
+        flex-grow: 1;              /* Membiarkan body mengisi sisa ruang yang ada */
+    }
+    
+    .title { 
+        font-size: 18px; 
+        font-weight: 800; 
+        margin-bottom: 8px; 
+        line-height: 1.3; 
+        /* Membatasi teks maksimal 2 baris agar sangat rapi */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .price { 
+        color: var(--accent); 
+        font-size: 20px; 
+        font-weight: 800; 
+        margin-bottom: 16px; 
+        margin-top: auto; /* KUNCI UTAMA: Mendorong harga & tombol selalu mentok ke bawah */
+    }
     
     /* Tombol Beli */
     .btn-buy { 
