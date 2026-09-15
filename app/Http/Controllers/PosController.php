@@ -37,6 +37,10 @@ class PosController extends Controller
             $metode_pembayaran = $request->metode_pembayaran ?? 'Tunai';
             $tipe_pesanan_text = 'POS Offline (' . $metode_pembayaran . ')';
 
+            // Menangkap input uang tunai dan kembalian dari frontend (view)
+            $uangTunai = $request->uang_tunai ?? 0;
+            $kembalian = $request->kembalian ?? 0;
+
             // BYPASS METODE CREATE MENJADI INSTANSIASI AGAR RESI PASTI TERSIMPAN
             $order = new Order();
             $order->user_id = Auth::id() ?? 1;
@@ -83,9 +87,12 @@ class PosController extends Controller
 
             $order->load('details.product');
 
+            // --- PENGIRIMAN DATA UANG TUNAI & KEMBALIAN KE STRUK ---
             return redirect()->back()
                 ->with('success', 'Transaksi Kasir Berhasil! Resi #POS telah otomatis masuk ke Laporan dan Dashboard.')
-                ->with('print_order', $order);
+                ->with('print_order', $order)
+                ->with('uang_tunai', $uangTunai)
+                ->with('kembalian', $kembalian);
             
         } catch (\Exception $e) {
             DB::rollBack();
